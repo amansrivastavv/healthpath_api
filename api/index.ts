@@ -18,34 +18,15 @@ async function bootstrapServer(): Promise<any> {
   if (!cachedServer) {
     const app = await NestFactory.create(AppModule, new ExpressAdapter(server));
 
-    // Security Headers with relaxed CSP for Swagger UI
+    // Security Headers
     app.use(
       helmet({
-        contentSecurityPolicy: {
-          directives: {
-            defaultSrc: [`'self'`],
-            styleSrc: [
-              `'self'`,
-              `'unsafe-inline'`,
-              'https://cdnjs.cloudflare.com',
-            ],
-            scriptSrc: [
-              `'self'`,
-              `'unsafe-inline'`,
-              'https://cdnjs.cloudflare.com',
-            ],
-            imgSrc: [
-              `'self'`,
-              'data:',
-              'https://validator.swagger.io',
-              'https://cdnjs.cloudflare.com',
-            ],
-          },
-        },
+        contentSecurityPolicy: false,
+        crossOriginEmbedderPolicy: false,
       }),
     );
 
-    // CORS Configuration
+    // CORS
     const allowedOrigins = process.env.CORS_ORIGIN
       ? process.env.CORS_ORIGIN.split(',')
       : ['http://localhost:5173', 'http://localhost:3000'];
@@ -55,23 +36,24 @@ async function bootstrapServer(): Promise<any> {
       credentials: true,
     });
 
-    // Global Prefix & Versioning
+    // Global Prefix
     app.setGlobalPrefix('api', {
       exclude: [
         'health',
         'api/health',
         'docs',
-        'docs/(.*)',
+        'docs/{*path}',
         'api/docs',
-        'api/docs/(.*)',
+        'api/docs/{*path}',
       ],
     });
 
+    // API Versioning
     app.enableVersioning({
       type: VersioningType.URI,
     });
 
-    // Validation Pipe
+    // Validation
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -80,32 +62,27 @@ async function bootstrapServer(): Promise<any> {
       }),
     );
 
-    // Swagger Documentation
+    // Swagger
     const config = new DocumentBuilder()
       .setTitle('HealthPath API')
-      .setDescription('HealthPath Backend API')
+      .setDescription('HealthPath Backend API Documentation')
       .setVersion('1.0.0')
       .addBearerAuth()
       .build();
 
+    const document = SwaggerModule.createDocument(app, config);
+
     const customOptions: SwaggerCustomOptions = {
       customSiteTitle: 'HealthPath API Docs',
-      customCssUrl: [
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui.min.css',
-      ],
-      customJs: [
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-bundle.min.js',
-        'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui-standalone-preset.min.js',
-      ],
     };
 
-    const document = SwaggerModule.createDocument(app, config);
     SwaggerModule.setup('docs', app, document, customOptions);
     SwaggerModule.setup('api/docs', app, document, customOptions);
 
     await app.init();
     cachedServer = server;
   }
+
   return cachedServer;
 }
 
