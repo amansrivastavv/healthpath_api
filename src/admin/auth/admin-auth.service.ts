@@ -1,5 +1,4 @@
 import {
-  ConflictException,
   Injectable,
   UnauthorizedException,
   Logger,
@@ -8,17 +7,17 @@ import {
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RegisterDto } from './dto/register.dto';
-import { LoginDto } from './dto/login.dto';
-import { ForgotPasswordDto } from './dto/forgot-password.dto';
-import { ResetPasswordDto } from './dto/reset-password.dto';
+import { AdminLoginDto } from './dto/admin-login.dto';
+import { AdminForgotPasswordDto } from './dto/admin-forgot-password.dto';
+import { AdminResetPasswordDto } from './dto/admin-reset-password.dto';
 import { MailService } from '../../mail/mail.service';
 import { generateSecureToken, hashToken } from '../../common/utils/crypto.util';
 import { ApiResponseHelper } from '../../common/utils/response.util';
+import { UserRole } from '@prisma/client';
 
 @Injectable()
-export class AuthService {
-  private readonly logger = new Logger(AuthService.name);
+export class AdminAuthService {
+  private readonly logger = new Logger(AdminAuthService.name);
 
   constructor(
     private readonly prisma: PrismaService,
@@ -26,67 +25,7 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: {
-        email: dto.email,
-      },
-      select: {
-        id: true,
-        email: true,
-      },
-    });
-
-    if (existingUser) {
-      throw new ConflictException({
-        message: 'Validation failed',
-        errors: [
-          {
-            field: 'email',
-            message: 'Email already exists',
-          },
-        ],
-      });
-    }
-
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
-
-    const user = await this.prisma.user.create({
-      data: {
-        fullName: dto.fullName,
-        email: dto.email,
-        password: hashedPassword,
-      },
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        profileImage: true,
-        phoneNumber: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
-
-    this.logger.log(`New user registered: ${user.email}`);
-
-    const userProfile = {
-      id: user.id,
-      fullName: user.fullName,
-      email: user.email,
-      profileImage: user.profileImage,
-      phoneNumber: user.phoneNumber,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
-
-    return ApiResponseHelper.success(
-      'User registered successfully',
-      userProfile,
-    );
-  }
-
-  async login(dto: LoginDto) {
+  async login(dto: AdminLoginDto) {
     const user = await this.prisma.user.findUnique({
       where: {
         email: dto.email,
@@ -96,16 +35,16 @@ export class AuthService {
         fullName: true,
         email: true,
         password: true,
-        profileImage: true,
-        phoneNumber: true,
         role: true,
-        createdAt: true,
-        updatedAt: true,
       },
     });
 
     if (!user) {
       throw new UnauthorizedException('Invalid email or password');
+    }
+
+    if (user.role !== UserRole.ADMIN && user.role !== UserRole.SUPER_ADMIN) {
+      throw new UnauthorizedException('Unauthorized access');
     }
 
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
@@ -122,16 +61,13 @@ export class AuthService {
 
     const accessToken = await this.jwtService.signAsync(payload);
 
-    this.logger.log(`User logged in: ${user.email}`);
+    this.logger.log(`Admin logged in: ${user.email}`);
 
     const userProfile = {
       id: user.id,
       fullName: user.fullName,
       email: user.email,
-      profileImage: user.profileImage,
-      phoneNumber: user.phoneNumber,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      role: user.role,
     };
 
     return ApiResponseHelper.success('Login successful', {
@@ -140,17 +76,16 @@ export class AuthService {
     });
   }
 
-  logout() {
-    return ApiResponseHelper.success('Logged out successfully');
-  }
-
-  async forgotPassword(dto: ForgotPasswordDto) {
+  async forgotPassword(dto: AdminForgotPasswordDto) {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
-      select: { id: true, email: true },
+      select: { id: true, email: true, role: true },
     });
 
-    if (user) {
+    if (
+      user &&
+      (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN)
+    ) {
       const rawToken = generateSecureToken();
       const hashedToken = hashToken(rawToken);
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
@@ -166,12 +101,13 @@ export class AuthService {
       await this.mailService.sendForgotPasswordEmail(user.email, rawToken);
     }
 
+    // Always return success even if user not found/not admin to prevent email enumeration
     return ApiResponseHelper.success(
       'If an account exists, a password reset link has been sent.',
     );
   }
 
-  async resetPassword(dto: ResetPasswordDto) {
+  async resetPassword(dto: AdminResetPasswordDto) {
     const hashedToken = hashToken(dto.token);
 
     const user = await this.prisma.user.findFirst({
@@ -181,10 +117,13 @@ export class AuthService {
           gte: new Date(),
         },
       },
-      select: { id: true },
+      select: { id: true, role: true },
     });
 
-    if (!user) {
+    if (
+      !user ||
+      (user.role !== UserRole.ADMIN && user.role !== UserRole.SUPER_ADMIN)
+    ) {
       throw new BadRequestException({
         message: 'Validation failed',
         errors: [
