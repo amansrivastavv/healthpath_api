@@ -11,8 +11,11 @@ import {
   UseGuards,
   Query,
   ParseUUIDPipe,
+  UseInterceptors,
+  UploadedFile,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam, ApiConsumes } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminProvidersService } from './admin-providers.service';
 import { CreateProviderDto } from './dto/create-provider.dto';
 import { UpdateProviderDto } from './dto/update-provider.dto';
@@ -40,15 +43,20 @@ export class AdminProvidersController {
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
-  @ApiOperation({ summary: 'Create a new provider' })
+  @ApiOperation({ summary: 'Create a new provider with an optional profile image' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('profileImage'))
   @ApiSuccessResponse(AdminProviderResponseDto, {
     status: HttpStatus.CREATED,
     description: 'Provider created successfully',
   })
   @ApiErrorResponse(HttpStatus.BAD_REQUEST, 'Validation failed')
   @ApiErrorResponse(HttpStatus.CONFLICT, 'Slug already exists')
-  create(@Body() dto: CreateProviderDto) {
-    return this.providersService.create(dto);
+  create(
+    @Body() dto: CreateProviderDto,
+    @UploadedFile() profileImage?: Express.Multer.File,
+  ) {
+    return this.providersService.create(dto, profileImage);
   }
 
   @Get()
@@ -77,8 +85,10 @@ export class AdminProvidersController {
 
   @Put(':id')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Update provider' })
+  @ApiOperation({ summary: 'Update provider and optionally replace profile image' })
   @ApiParam({ name: 'id', description: 'Provider UUID' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('profileImage'))
   @ApiSuccessResponse(AdminProviderResponseDto, {
     status: HttpStatus.OK,
     description: 'Provider updated successfully',
@@ -87,8 +97,9 @@ export class AdminProvidersController {
   update(
     @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
     @Body() dto: UpdateProviderDto,
+    @UploadedFile() profileImage?: Express.Multer.File,
   ) {
-    return this.providersService.update(id, dto);
+    return this.providersService.update(id, dto, profileImage);
   }
 
   @Delete(':id')

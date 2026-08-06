@@ -92,29 +92,46 @@ export class CreateProviderDto {
   longitude?: number;
 
   @ApiPropertyOptional({
-    example: { monday: { open: '08:00', close: '20:00' } },
+    example: '{"monday": {"open": "08:00", "close": "20:00"}}',
+    type: 'string',
   })
-  @IsObject()
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return value;
+      }
+    }
+    return value;
+  })
+  @IsObject({ message: 'openingHours must be a valid JSON object' })
   openingHours?: any;
 
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
+  @ApiPropertyOptional({ example: true, type: 'boolean' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  @IsBoolean()
   homeCollectionAvailable?: boolean;
 
-  @ApiPropertyOptional({ example: 'https://cdn.healthpath.com/lab-1.jpg' })
-  @IsString()
+  @ApiPropertyOptional({
+    type: 'string',
+    format: 'binary',
+    description: 'Direct file upload for profile image',
+  })
   @IsOptional()
-  profileImage?: string;
+  profileImage?: any;
 
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
+  @ApiPropertyOptional({ example: true, type: 'boolean' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  @IsBoolean()
   isVerified?: boolean;
 
-  @ApiPropertyOptional({ example: true })
-  @IsBoolean()
+  @ApiPropertyOptional({ example: true, type: 'boolean' })
   @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  @IsBoolean()
   isActive?: boolean;
 }

@@ -1,5 +1,6 @@
 import { Injectable, Logger, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { R2Service } from '../../r2/r2.service';
 import { ApiResponseHelper } from '../../common/utils/response.util';
 import { CreateProviderDto } from './dto/create-provider.dto';
 import { UpdateProviderDto } from './dto/update-provider.dto';
@@ -10,9 +11,12 @@ import { Prisma, ProviderType } from '@prisma/client';
 export class AdminProvidersService {
   private readonly logger = new Logger(AdminProvidersService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly r2Service: R2Service,
+  ) {}
 
-  async create(dto: CreateProviderDto) {
+  async create(dto: CreateProviderDto, profileImageFile?: Express.Multer.File) {
     // Check for unique slug
     const existing = await this.prisma.provider.findUnique({
       where: { slug: dto.slug },
@@ -22,9 +26,25 @@ export class AdminProvidersService {
       throw new ConflictException('Provider with this slug already exists');
     }
 
+    let profileImageUrl = dto.profileImage;
+
+    // Handle file upload if present
+    if (profileImageFile) {
+      const uploadResult = await this.r2Service.upload(
+        {
+          buffer: profileImageFile.buffer,
+          originalname: profileImageFile.originalname,
+          mimetype: profileImageFile.mimetype,
+        },
+        'providers/profiles',
+      );
+      profileImageUrl = uploadResult.url;
+    }
+
     const provider = await this.prisma.provider.create({
       data: {
         ...dto,
+        profileImage: profileImageUrl,
         type: dto.type as ProviderType,
       },
     });
@@ -97,9 +117,12 @@ export class AdminProvidersService {
     return ApiResponseHelper.success('Provider fetched successfully', provider);
   }
 
-  async update(id: string, dto: UpdateProviderDto) {
+  async update(id: string, dto: UpdateProviderDto, profileImageFile?: Express.Multer.File) {
     // Ensure provider exists
-    await this.findOne(id);
+    const provider = await this.prisma.provider.findUnique({ where: { id } });
+    if (!provider) {
+      throw new NotFoundException('Provider not found');
+    }
 
     // If updating slug, check uniqueness
     if (dto.slug) {
@@ -111,10 +134,31 @@ export class AdminProvidersService {
       }
     }
 
+    let profileImageUrl = dto.profileImage;
+
+    // Handle file upload if present
+    if (profileImageFile) {
+      const uploadResult = await this.r2Service.upload(
+        {
+          buffer: profileImageFile.buffer,
+          originalname: profileImageFile.originalname,
+          mimetype: profileImageFile.mimetype,
+        },
+        'providers/profiles',
+      );
+      profileImageUrl = uploadResult.url;
+
+      // Optional: Delete the old image from R2 if we are replacing it
+      // if (provider.profileImage && provider.profileImage.includes('r2.cloudflarestorage')) {
+      //   // Extract key and delete...
+      // }
+    }
+
     const updated = await this.prisma.provider.update({
       where: { id },
       data: {
         ...dto,
+        profileImage: profileImageUrl !== undefined ? profileImageUrl : undefined,
         type: dto.type ? (dto.type as ProviderType) : undefined,
       },
     });
