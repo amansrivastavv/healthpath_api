@@ -1,8 +1,14 @@
 import { Module } from '@nestjs/common';
+import { ProvidersController } from './providers.controller';
+import { ProvidersService } from './providers.service';
 
 /**
- * Placeholder module for App Providers feature.
- * Will contain provider search, details, and availability.
+ * Module for App Providers feature.
+ * Contains provider search, details, and nearby functionality.
  */
-@Module({})
+@Module({
+  controllers: [ProvidersController],
+  providers: [ProvidersService],
+  exports: [ProvidersService],
+})
 export class AppProvidersModule {}
