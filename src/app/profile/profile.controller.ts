@@ -19,9 +19,9 @@ import {
 } from '@nestjs/swagger';
 import { ProfileService } from './profile.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
-import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
-@ApiTags('User Profile')
+@ApiTags('App - Profile')
 @ApiBearerAuth()
 @Controller({
   path: 'profile',

@@ -5,15 +5,15 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { Public } from '../common/decorators/public.decorator';
+import { Public } from '../../common/decorators/public.decorator';
 import { UserResponseDto, EmptyResponseDto } from './dto/user-response.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
 import {
   ApiSuccessResponse,
   ApiErrorResponse,
-} from '../common/decorators/api-response.decorator';
+} from '../../common/decorators/api-response.decorator';
 
-@ApiTags('Authentication')
+@ApiTags('App - Authentication')
 @Controller({
   path: 'auth',
   version: '1',

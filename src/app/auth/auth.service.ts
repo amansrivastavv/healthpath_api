@@ -7,14 +7,14 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
-import { MailService } from '../mail/mail.service';
-import { generateSecureToken, hashToken } from '../common/utils/crypto.util';
-import { ApiResponseHelper } from '../common/utils/response.util';
+import { MailService } from '../../mail/mail.service';
+import { generateSecureToken, hashToken } from '../../common/utils/crypto.util';
+import { ApiResponseHelper } from '../../common/utils/response.util';
 
 @Injectable()
 export class AuthService {

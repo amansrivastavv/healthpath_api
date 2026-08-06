@@ -14,6 +14,9 @@ import {
 import helmet from 'helmet';
 import { ValidationError } from 'class-validator';
 
+import { AppFeatureModule } from './app/app-feature.module';
+import { AdminModule } from './admin/admin.module';
+
 async function bootstrap() {
   const logger = new Logger('Bootstrap');
   const app = await NestFactory.create(AppModule);
@@ -61,9 +64,11 @@ async function bootstrap() {
       'health',
       'api/health',
       'docs',
-      'docs/(.*)',
+      'docs/{*path}',
       'api/docs',
-      'api/docs/(.*)',
+      'api/docs/{*path}',
+      'admin/docs',
+      'admin/docs/{*path}',
     ],
   });
   app.enableVersioning({
@@ -104,16 +109,8 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger Documentation
-  const config = new DocumentBuilder()
-    .setTitle('HealthPath API')
-    .setDescription('HealthPath Backend API')
-    .setVersion('1.0.0')
-    .addBearerAuth()
-    .build();
-
-  const customOptions: SwaggerCustomOptions = {
-    customSiteTitle: 'HealthPath API Docs',
+  // ─── Shared Swagger UI Options ───
+  const swaggerUiOptions: SwaggerCustomOptions = {
     customCssUrl: [
       'https://cdnjs.cloudflare.com/ajax/libs/swagger-ui/5.18.2/swagger-ui.min.css',
     ],
@@ -123,16 +120,55 @@ async function bootstrap() {
     ],
   };
 
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, document, customOptions);
-  SwaggerModule.setup('api/docs', app, document, customOptions);
+  // ─── Patient API Swagger (/api/docs) ───
+  const patientConfig = new DocumentBuilder()
+    .setTitle('HealthPath Patient API')
+    .setDescription(
+      'Patient-facing API for HealthPath — authentication, profile, providers, bookings, tests, reports & notifications.',
+    )
+    .setVersion('1.0.0')
+    .addBearerAuth()
+    .build();
+
+  const patientDocument = SwaggerModule.createDocument(app, patientConfig, {
+    include: [AppFeatureModule],
+    deepScanRoutes: true,
+  });
+
+  SwaggerModule.setup('api/docs', app, patientDocument, {
+    ...swaggerUiOptions,
+    customSiteTitle: 'HealthPath Patient API Docs',
+  });
+
+  // ─── Admin API Swagger (/admin/docs) ───
+  const adminConfig = new DocumentBuilder()
+    .setTitle('HealthPath Admin API')
+    .setDescription(
+      'Admin Dashboard API for HealthPath — user management, provider management, bookings, reports, settings & more.',
+    )
+    .setVersion('1.0.0')
+    .addBearerAuth()
+    .build();
+
+  const adminDocument = SwaggerModule.createDocument(app, adminConfig, {
+    include: [AdminModule],
+    deepScanRoutes: true,
+  });
+
+  SwaggerModule.setup('admin/docs', app, adminDocument, {
+    ...swaggerUiOptions,
+    customSiteTitle: 'HealthPath Admin API Docs',
+  });
 
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
   logger.log(`Application running on: http://localhost:${port}`);
   logger.log(
-    `Swagger Docs available at: http://localhost:${port}/docs and http://localhost:${port}/api/docs`,
+    `Patient API Docs: http://localhost:${port}/api/docs`,
+  );
+  logger.log(
+    `Admin API Docs:   http://localhost:${port}/admin/docs`,
   );
 }
 

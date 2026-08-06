@@ -1,0 +1,9 @@
+import { Controller } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+
+@ApiTags('Admin - Reports')
+@Controller({
+  path: 'admin/reports',
+  version: '1',
+})
+export class AdminReportsController {}

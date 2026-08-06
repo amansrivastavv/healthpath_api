@@ -4,8 +4,8 @@ import {
   NotFoundException,
   Logger,
 } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service';
-import { R2Service } from '../r2/r2.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { R2Service } from '../../r2/r2.service';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 
 const MAX_FILE_SIZE_BYTES = 500 * 1024; // 500 KB limit

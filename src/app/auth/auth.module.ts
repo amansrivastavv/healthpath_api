@@ -4,7 +4,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { MailModule } from '../mail/mail.module';
+import { MailModule } from '../../mail/mail.module';
 
 @Module({
   imports: [
