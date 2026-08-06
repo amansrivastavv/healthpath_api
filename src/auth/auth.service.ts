@@ -3,12 +3,17 @@ import {
   Injectable,
   UnauthorizedException,
   Logger,
+  BadRequestException,
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
+import { MailService } from '../mail/mail.service';
+import { generateSecureToken, hashToken } from '../common/utils/crypto.util';
 import { ApiResponseHelper } from '../common/utils/response.util';
 
 @Injectable()
@@ -18,6 +23,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -130,5 +136,75 @@ export class AuthService {
       accessToken,
       user: userProfile,
     });
+  }
+
+  logout() {
+    return ApiResponseHelper.success('Logged out successfully');
+  }
+
+  async forgotPassword(dto: ForgotPasswordDto) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+      select: { id: true, email: true },
+    });
+
+    if (user) {
+      const rawToken = generateSecureToken();
+      const hashedToken = hashToken(rawToken);
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: {
+          passwordResetToken: hashedToken,
+          passwordResetExpires: expiresAt,
+        },
+      });
+
+      await this.mailService.sendForgotPasswordEmail(user.email, rawToken);
+    }
+
+    return ApiResponseHelper.success(
+      'If an account exists, a password reset link has been sent.',
+    );
+  }
+
+  async resetPassword(dto: ResetPasswordDto) {
+    const hashedToken = hashToken(dto.token);
+
+    const user = await this.prisma.user.findFirst({
+      where: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: {
+          gte: new Date(),
+        },
+      },
+      select: { id: true },
+    });
+
+    if (!user) {
+      throw new BadRequestException({
+        message: 'Validation failed',
+        errors: [
+          {
+            field: 'token',
+            message: 'Invalid or expired reset token',
+          },
+        ],
+      });
+    }
+
+    const hashedPassword = await bcrypt.hash(dto.password, 10);
+
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        passwordResetToken: null,
+        passwordResetExpires: null,
+      },
+    });
+
+    return ApiResponseHelper.success('Password reset successfully.');
   }
 }

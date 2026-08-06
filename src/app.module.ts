@@ -8,6 +8,7 @@ import { AuthModule } from './auth/auth.module';
 import { R2Module } from './r2/r2.module';
 import { HealthModule } from './health/health.module';
 import { ProfileModule } from './profile/profile.module';
+import { MailModule } from './mail/mail.module';
 
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
@@ -24,6 +25,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
     R2Module,
     HealthModule,
     ProfileModule,
+    MailModule,
   ],
   providers: [
     {

@@ -38,8 +38,11 @@ model User {
   role            UserRole    @default(PATIENT)
   status          UserStatus  @default(PENDING_VERIFICATION)
 
-  emailVerified   Boolean     @default(false) @map("email_verified")
-  phoneVerified   Boolean     @default(false) @map("phone_verified")
+  emailVerified             Boolean     @default(false) @map("email_verified")
+  phoneVerified             Boolean     @default(false) @map("phone_verified")
+
+  passwordResetToken       String?     @map("password_reset_token")
+  passwordResetExpires     DateTime?   @map("password_reset_expires")
 
   lastLoginAt     DateTime?   @map("last_login_at")
 
@@ -50,6 +53,7 @@ model User {
   @@index([phoneNumber])
   @@index([role])
   @@index([status])
+  @@index([passwordResetToken])
 
   @@map("users")
 }

@@ -22,3 +22,5 @@ export class UserResponseDto {
   @ApiProperty({ example: '2026-08-04T12:00:00.000Z' })
   updatedAt: Date;
 }
+
+export class EmptyResponseDto {}
