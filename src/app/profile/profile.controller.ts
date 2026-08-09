@@ -14,6 +14,7 @@ import {
   ApiBearerAuth,
   ApiBody,
   ApiConsumes,
+  ApiOperation,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
@@ -31,6 +32,7 @@ export class ProfileController {
   constructor(private readonly profileService: ProfileService) {}
 
   @Get()
+  @ApiOperation({ summary: 'Get user profile' })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 401 })
   @ApiResponse({ status: 404 })
@@ -38,35 +40,8 @@ export class ProfileController {
     return this.profileService.getProfile(userId);
   }
 
-  @Post()
-  @HttpCode(HttpStatus.OK)
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data', 'application/json')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-        fullName: { type: 'string' },
-        phoneNumber: { type: 'string' },
-      },
-    },
-  })
-  @ApiResponse({ status: 200 })
-  @ApiResponse({ status: 400 })
-  @ApiResponse({ status: 401 })
-  updateProfilePost(
-    @CurrentUser('sub') userId: string,
-    @Body() dto: UpdateProfileDto,
-    @UploadedFile() file?: Express.Multer.File,
-  ) {
-    return this.profileService.updateProfile(userId, dto, file);
-  }
-
   @Put()
+  @ApiOperation({ summary: 'Update user profile (name, phone, optional picture)' })
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data', 'application/json')
   @ApiBody({
@@ -85,7 +60,7 @@ export class ProfileController {
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 401 })
-  updateProfilePut(
+  updateProfile(
     @CurrentUser('sub') userId: string,
     @Body() dto: UpdateProfileDto,
     @UploadedFile() file?: Express.Multer.File,
@@ -94,6 +69,7 @@ export class ProfileController {
   }
 
   @Post('picture')
+  @ApiOperation({ summary: 'Upload profile picture separately' })
   @HttpCode(HttpStatus.OK)
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -119,3 +95,4 @@ export class ProfileController {
     return this.profileService.uploadProfilePicture(userId, file);
   }
 }
+

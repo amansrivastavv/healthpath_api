@@ -46,7 +46,6 @@ export class ProfileService {
     return {
       success: true,
       data: user,
-      user: user,
     };
   }
 
@@ -96,7 +95,6 @@ export class ProfileService {
       success: true,
       message: 'Profile updated successfully',
       data: updatedUser,
-      user: updatedUser,
     };
   }
 
@@ -137,7 +135,6 @@ export class ProfileService {
       success: true,
       message: 'Profile picture uploaded successfully',
       data: updatedUser,
-      user: updatedUser,
     };
   }
 
