@@ -3,6 +3,7 @@ import { AdminAuthModule } from './auth/admin-auth.module';
 import { AdminDashboardModule } from './dashboard/admin-dashboard.module';
 import { AdminUsersModule } from './users/admin-users.module';
 import { AdminProvidersModule } from './providers/admin-providers.module';
+import { AdminSpecializationsModule } from './specializations/admin-specializations.module';
 import { AdminTestsModule } from './tests/admin-tests.module';
 import { AdminBookingsModule } from './bookings/admin-bookings.module';
 import { AdminReportsModule } from './reports/admin-reports.module';
@@ -23,6 +24,7 @@ import { AdminSettingsModule } from './settings/admin-settings.module';
     AdminDashboardModule,
     AdminUsersModule,
     AdminProvidersModule,
+    AdminSpecializationsModule,
     AdminTestsModule,
     AdminBookingsModule,
     AdminReportsModule,

@@ -3,7 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ApiResponseHelper } from '../../common/utils/response.util';
 import { GetProvidersDto } from './dto/get-providers.dto';
 import { NearbyProvidersDto } from './dto/nearby-providers.dto';
-import { Prisma } from '@prisma/client';
+import { Prisma, VerificationStatus } from '@prisma/client';
 
 /** Select fields exposed to the patient-facing API */
 const PROVIDER_SELECT = {
@@ -14,6 +14,7 @@ const PROVIDER_SELECT = {
   description: true,
   email: true,
   phone: true,
+  website: true,
   address: true,
   city: true,
   state: true,
@@ -21,13 +22,21 @@ const PROVIDER_SELECT = {
   pincode: true,
   latitude: true,
   longitude: true,
+  establishedYear: true,
+  emergencyAvailable: true,
+  available24x7: true,
+  parkingAvailable: true,
+  pharmacyAvailable: true,
+  wheelchairAccessible: true,
   rating: true,
   totalRatings: true,
   openingHours: true,
   homeCollectionAvailable: true,
   profileImage: true,
   coverImage: true,
+  coverImages: true,
   isVerified: true,
+  verificationStatus: true,
   isActive: true,
   isFeatured: true,
   createdAt: true,
@@ -44,7 +53,7 @@ export class ProvidersService {
    * GET /providers — list with pagination, search, filters & sorting.
    */
   async findAll(dto: GetProvidersDto) {
-    const { page, limit, search, city, type, verified, homeCollection, sortBy, sortOrder } = dto;
+    const { page, limit, search, city, state, type, verified, verificationStatus, homeCollection, sortBy, sortOrder } = dto;
     const skip = (page! - 1) * limit!;
 
     // Build dynamic where clause
@@ -64,12 +73,20 @@ export class ProvidersService {
       where.city = { equals: city, mode: 'insensitive' };
     }
 
+    if (state) {
+      where.state = { equals: state, mode: 'insensitive' };
+    }
+
     if (type) {
-      where.type = type as Prisma.EnumProviderTypeFilter['equals'];
+      where.type = type;
     }
 
     if (verified !== undefined) {
       where.isVerified = verified === 'true';
+    }
+
+    if (verificationStatus) {
+      where.verificationStatus = verificationStatus;
     }
 
     if (homeCollection !== undefined) {
@@ -100,32 +117,34 @@ export class ProvidersService {
 
   /**
    * GET /providers/nearby — find providers within a radius using the Haversine formula.
-   *
-   * Uses a raw SQL query with the Haversine distance calculation.
-   * Can be replaced with PostGIS `ST_DWithin` for production-scale performance.
    */
   async findNearby(dto: NearbyProvidersDto) {
     const { latitude, longitude, radius, page, limit } = dto;
     const skip = (page! - 1) * limit!;
 
-    // Earth radius in kilometers
     const EARTH_RADIUS_KM = 6371;
 
-    // Raw SQL with Haversine formula for distance calculation
-    // Filters by is_active = true and only rows that have lat/lng
     const providers = await this.prisma.$queryRaw<
       Array<Record<string, unknown>>
     >`
       SELECT
-        id, name, slug, type, description, email, phone,
+        id, name, slug, type, description, email, phone, website,
         address, city, state, country, pincode,
         latitude, longitude,
+        established_year AS "establishedYear",
+        emergency_available AS "emergencyAvailable",
+        available_24x7 AS "available24x7",
+        parking_available AS "parkingAvailable",
+        pharmacy_available AS "pharmacyAvailable",
+        wheelchair_accessible AS "wheelchairAccessible",
         rating, total_ratings AS "totalRatings",
         opening_hours AS "openingHours",
         home_collection_available AS "homeCollectionAvailable",
         profile_image AS "profileImage",
         cover_image AS "coverImage",
+        cover_images AS "coverImages",
         is_verified AS "isVerified",
+        verification_status AS "verificationStatus",
         is_active AS "isActive",
         is_featured AS "isFeatured",
         created_at AS "createdAt",
@@ -152,7 +171,6 @@ export class ProvidersService {
       LIMIT ${limit} OFFSET ${skip}
     `;
 
-    // Count total matching rows
     const countResult = await this.prisma.$queryRaw<
       Array<{ count: bigint }>
     >`
@@ -172,7 +190,6 @@ export class ProvidersService {
 
     const total = Number(countResult[0]?.count ?? 0);
 
-    // Round distance to 2 decimal places
     const items = providers.map((p) => ({
       ...p,
       distance: Math.round((p.distance as number) * 100) / 100,
@@ -193,8 +210,8 @@ export class ProvidersService {
    * GET /providers/:id — single provider by UUID.
    */
   async findOne(id: string) {
-    const provider = await this.prisma.provider.findUnique({
-      where: { id },
+    const provider = await this.prisma.provider.findFirst({
+      where: { id, isActive: true },
       select: PROVIDER_SELECT,
     });
 
@@ -203,5 +220,53 @@ export class ProvidersService {
     }
 
     return ApiResponseHelper.success('Provider fetched successfully', provider);
+  }
+
+  /**
+   * GET /providers/:id/doctors — get active & verified doctors for a provider.
+   */
+  async findDoctorsByProviderId(providerId: string) {
+    const provider = await this.prisma.provider.findFirst({
+      where: { id: providerId, isActive: true },
+    });
+
+    if (!provider) {
+      throw new NotFoundException('Provider not found');
+    }
+
+    const doctors = await this.prisma.doctor.findMany({
+      where: {
+        providerId,
+        isActive: true,
+        verificationStatus: VerificationStatus.VERIFIED,
+      },
+      select: {
+        id: true,
+        fullName: true,
+        profileImage: true,
+        qualification: true,
+        experienceYears: true,
+        medicalRegistrationNumber: true,
+        gender: true,
+        languages: true,
+        about: true,
+        consultationFee: true,
+        onlineConsultationFee: true,
+        inPersonConsultationFee: true,
+        homeVisitFee: true,
+        consultationTypes: true,
+        specialization: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            icon: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return ApiResponseHelper.success('Provider doctors fetched successfully', doctors);
   }
 }

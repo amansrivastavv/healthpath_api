@@ -6,15 +6,18 @@ import {
   IsNumber,
   IsBoolean,
   IsObject,
-  IsIn,
+  IsEnum,
+  IsArray,
   Min,
   Max,
+  IsInt,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
+import { ProviderType, VerificationStatus } from '@prisma/client';
 
 export class CreateProviderDto {
-  @ApiProperty({ example: 'HealthPath Diagnostics' })
+  @ApiProperty({ example: 'Apollo Super Speciality Hospital' })
   @IsString()
   @IsNotEmpty({ message: 'Name is required' })
   @Transform(({ value }: { value: unknown }): unknown =>
@@ -22,22 +25,22 @@ export class CreateProviderDto {
   )
   name: string;
 
-  @ApiProperty({ example: 'healthpath-diagnostics' })
+  @ApiProperty({ example: 'apollo-hospital-gurugram' })
   @IsString()
   @IsNotEmpty({ message: 'Slug is required' })
   slug: string;
 
-  @ApiProperty({ example: 'LAB', enum: ['LAB', 'CLINIC', 'BOTH'] })
-  @IsIn(['LAB', 'CLINIC', 'BOTH'], { message: 'Type must be LAB, CLINIC, or BOTH' })
+  @ApiProperty({ enum: ProviderType, example: ProviderType.HOSPITAL })
+  @IsEnum(ProviderType, { message: 'Type must be INDIVIDUAL_DOCTOR, CLINIC, HOSPITAL, LAB, or BOTH' })
   @IsNotEmpty({ message: 'Type is required' })
-  type: string;
+  type: ProviderType;
 
-  @ApiPropertyOptional({ example: 'A leading diagnostic lab.' })
+  @ApiPropertyOptional({ example: 'Premier multi-speciality hospital offering 24/7 emergency care.' })
   @IsString()
   @IsOptional()
   description?: string;
 
-  @ApiPropertyOptional({ example: 'contact@healthpath.com' })
+  @ApiPropertyOptional({ example: 'contact@apollo.com' })
   @IsEmail({}, { message: 'Invalid email address' })
   @IsOptional()
   @Transform(({ value }: { value: unknown }): unknown =>
@@ -49,6 +52,11 @@ export class CreateProviderDto {
   @IsString()
   @IsOptional()
   phone?: string;
+
+  @ApiPropertyOptional({ example: 'https://www.apollohospitals.com' })
+  @IsString()
+  @IsOptional()
+  website?: string;
 
   @ApiPropertyOptional({ example: '123, MG Road' })
   @IsString()
@@ -91,6 +99,45 @@ export class CreateProviderDto {
   @Type(() => Number)
   longitude?: number;
 
+  // Facility Details
+  @ApiPropertyOptional({ example: 1995 })
+  @IsOptional()
+  @IsInt()
+  @Min(1800)
+  @Max(new Date().getFullYear())
+  @Type(() => Number)
+  establishedYear?: number;
+
+  @ApiPropertyOptional({ example: true, type: 'boolean' })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  @IsBoolean()
+  emergencyAvailable?: boolean;
+
+  @ApiPropertyOptional({ example: true, type: 'boolean' })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  @IsBoolean()
+  available24x7?: boolean;
+
+  @ApiPropertyOptional({ example: true, type: 'boolean' })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  @IsBoolean()
+  parkingAvailable?: boolean;
+
+  @ApiPropertyOptional({ example: true, type: 'boolean' })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  @IsBoolean()
+  pharmacyAvailable?: boolean;
+
+  @ApiPropertyOptional({ example: true, type: 'boolean' })
+  @IsOptional()
+  @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
+  @IsBoolean()
+  wheelchairAccessible?: boolean;
+
   @ApiPropertyOptional({
     example: '{"monday": {"open": "08:00", "close": "20:00"}}',
     type: 'string',
@@ -123,11 +170,22 @@ export class CreateProviderDto {
   @IsOptional()
   profileImage?: any;
 
+  @ApiPropertyOptional({ example: ['https://cdn.example.com/cover1.jpg'], type: [String] })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  coverImages?: string[];
+
   @ApiPropertyOptional({ example: true, type: 'boolean' })
   @IsOptional()
   @Transform(({ value }: { value: unknown }) => value === 'true' || value === true)
   @IsBoolean()
   isVerified?: boolean;
+
+  @ApiPropertyOptional({ enum: VerificationStatus, example: VerificationStatus.VERIFIED })
+  @IsOptional()
+  @IsEnum(VerificationStatus)
+  verificationStatus?: VerificationStatus;
 
   @ApiPropertyOptional({ example: true, type: 'boolean' })
   @IsOptional()

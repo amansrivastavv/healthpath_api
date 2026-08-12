@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { AuthModule } from './auth/auth.module';
 import { ProfileModule } from './profile/profile.module';
 import { AppProvidersModule } from './providers/app-providers.module';
+import { AppDoctorsModule } from './doctors/app-doctors.module';
+import { AppSpecializationsModule } from './specializations/app-specializations.module';
 
 /**
  * Aggregate module for all patient-facing (App) feature modules.
@@ -14,7 +16,17 @@ import { AppProvidersModule } from './providers/app-providers.module';
  * - AppNotificationsModule
  */
 @Module({
-  imports: [AuthModule, ProfileModule, AppProvidersModule],
-  exports: [AuthModule],
+  imports: [
+    AuthModule,
+    ProfileModule,
+    AppProvidersModule,
+    AppDoctorsModule,
+    AppSpecializationsModule,
+  ],
+  exports: [
+    AuthModule,
+    AppDoctorsModule,
+    AppSpecializationsModule,
+  ],
 })
 export class AppFeatureModule {}

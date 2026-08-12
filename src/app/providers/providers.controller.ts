@@ -21,6 +21,7 @@ import {
   ProviderListResponseDto,
   NearbyProviderListResponseDto,
 } from './entities/provider.entity';
+import { DoctorListResponseDto } from '../../admin/providers/dto/doctor-response.dto';
 
 @ApiTags('App - Providers')
 @Controller({
@@ -36,7 +37,7 @@ export class ProvidersController {
   @ApiOperation({
     summary: 'Get all providers',
     description:
-      'Retrieve a paginated list of providers with optional search, filtering by city/type/verified/homeCollection, and sorting.',
+      'Retrieve a paginated list of active providers with optional search, filtering by city/state/type/verified/homeCollection, and sorting.',
   })
   @ApiSuccessResponse(ProviderListResponseDto, {
     description: 'Providers fetched successfully',
@@ -67,7 +68,7 @@ export class ProvidersController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Get provider details',
-    description: 'Retrieve complete information for a single provider by UUID.',
+    description: 'Retrieve complete information for a single active provider by UUID.',
   })
   @ApiParam({ name: 'id', description: 'Provider UUID', example: 'd3b07384-d113-4956-a5e2-e1c7d23d8c8d' })
   @ApiSuccessResponse(ProviderEntity, {
@@ -77,5 +78,21 @@ export class ProvidersController {
   @ApiErrorResponse(HttpStatus.BAD_REQUEST, 'Invalid UUID format')
   findOne(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.providersService.findOne(id);
+  }
+
+  @Public()
+  @Get(':id/doctors')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Get doctors belonging to a provider (Patient view)',
+    description: 'Retrieve a list of active & verified doctors for a given provider.',
+  })
+  @ApiParam({ name: 'id', description: 'Provider UUID', example: 'd3b07384-d113-4956-a5e2-e1c7d23d8c8d' })
+  @ApiSuccessResponse(DoctorListResponseDto, {
+    description: 'Provider doctors fetched successfully',
+  })
+  @ApiErrorResponse(HttpStatus.NOT_FOUND, 'Provider not found')
+  getDoctors(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.providersService.findDoctorsByProviderId(id);
   }
 }

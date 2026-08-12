@@ -20,6 +20,8 @@ import { AdminProvidersService } from './admin-providers.service';
 import { CreateProviderDto } from './dto/create-provider.dto';
 import { UpdateProviderDto } from './dto/update-provider.dto';
 import { GetProvidersDto } from '../../app/providers/dto/get-providers.dto';
+import { CreateDoctorDto } from './dto/create-doctor.dto';
+import { DoctorResponseDto, DoctorListResponseDto } from './dto/doctor-response.dto';
 import { AdminJwtGuard } from '../guards/admin-jwt.guard';
 import {
   AdminProviderResponseDto,
@@ -113,5 +115,37 @@ export class AdminProvidersController {
   @ApiErrorResponse(HttpStatus.NOT_FOUND, 'Provider not found')
   remove(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
     return this.providersService.remove(id);
+  }
+
+  @Get(':id/doctors')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Get all doctors belonging to a provider' })
+  @ApiParam({ name: 'id', description: 'Provider UUID' })
+  @ApiSuccessResponse(DoctorListResponseDto, {
+    status: HttpStatus.OK,
+    description: 'Doctors belonging to provider fetched successfully',
+  })
+  @ApiErrorResponse(HttpStatus.NOT_FOUND, 'Provider not found')
+  getDoctors(@Param('id', new ParseUUIDPipe({ version: '4' })) id: string) {
+    return this.providersService.getDoctorsByProviderId(id);
+  }
+
+  @Post(':id/doctors')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Create a doctor directly belonging to a provider' })
+  @ApiParam({ name: 'id', description: 'Provider UUID' })
+  @ApiConsumes('multipart/form-data')
+  @UseInterceptors(FileInterceptor('profileImage'))
+  @ApiSuccessResponse(DoctorResponseDto, {
+    status: HttpStatus.CREATED,
+    description: 'Doctor created successfully for provider',
+  })
+  @ApiErrorResponse(HttpStatus.NOT_FOUND, 'Provider or Specialization not found')
+  createDoctor(
+    @Param('id', new ParseUUIDPipe({ version: '4' })) id: string,
+    @Body() dto: CreateDoctorDto,
+    @UploadedFile() profileImage?: Express.Multer.File,
+  ) {
+    return this.providersService.createDoctorForProvider(id, dto, profileImage);
   }
 }

@@ -4,12 +4,12 @@ import {
   IsInt,
   Min,
   Max,
-  IsIn,
   IsEnum,
   IsBooleanString,
 } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
+import { ProviderType, VerificationStatus } from '@prisma/client';
 
 export enum ProviderSortBy {
   NAME = 'name',
@@ -38,7 +38,7 @@ export class GetProvidersDto {
   @Max(100, { message: 'Limit cannot exceed 100' })
   limit?: number = 10;
 
-  @ApiPropertyOptional({ description: 'Search by provider name', example: 'HealthPath' })
+  @ApiPropertyOptional({ description: 'Search by provider name or city', example: 'HealthPath' })
   @IsOptional()
   @IsString()
   @Transform(({ value }: { value: unknown }): unknown =>
@@ -54,15 +54,33 @@ export class GetProvidersDto {
   )
   city?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by provider type', enum: ['LAB', 'CLINIC', 'BOTH'] })
+  @ApiPropertyOptional({ description: 'Filter by state', example: 'Haryana' })
   @IsOptional()
-  @IsIn(['LAB', 'CLINIC', 'BOTH'], { message: 'Type must be LAB, CLINIC, or BOTH' })
-  type?: string;
+  @IsString()
+  @Transform(({ value }: { value: unknown }): unknown =>
+    typeof value === 'string' ? value.trim() : value,
+  )
+  state?: string;
 
-  @ApiPropertyOptional({ description: 'Filter by verification status', example: 'true' })
+  @ApiPropertyOptional({ enum: ProviderType, description: 'Filter by provider type' })
+  @IsOptional()
+  @IsEnum(ProviderType)
+  type?: ProviderType;
+
+  @ApiPropertyOptional({ description: 'Filter by verification flag ("true" or "false")', example: 'true' })
   @IsOptional()
   @IsBooleanString({ message: 'Verified must be true or false' })
   verified?: string;
+
+  @ApiPropertyOptional({ enum: VerificationStatus, description: 'Filter by verification status' })
+  @IsOptional()
+  @IsEnum(VerificationStatus)
+  verificationStatus?: VerificationStatus;
+
+  @ApiPropertyOptional({ description: 'Filter by active status ("true" or "false")', example: 'true' })
+  @IsOptional()
+  @IsBooleanString({ message: 'isActive must be true or false' })
+  isActive?: string;
 
   @ApiPropertyOptional({ description: 'Filter by home collection availability', example: 'true' })
   @IsOptional()
