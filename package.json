@@ -48,18 +48,18 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "swagger-ui-express": "^5.0.1",
-    "typescript": "^5.7.3"
-  },
-  "devDependencies": {
-    "@eslint/eslintrc": "^0.1.0",
-    "@eslint/js": "^9.18.0",
-    "@nestjs/schematics": "^11.0.0",
+    "typescript": "^5.7.3",
     "@types/bcrypt": "^6.0.0",
     "@types/express": "^5.0.0",
     "@types/multer": "^1.4.12",
     "@types/node": "^22.10.0",
     "@types/nodemailer": "^8.0.1",
-    "@types/passport-jwt": "^4.0.1",
+    "@types/passport-jwt": "^4.0.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^0.1.0",
+    "@eslint/js": "^9.18.0",
+    "@nestjs/schematics": "^11.0.0",
     "dotenv-cli": "^11.0.0",
     "eslint": "^10.8.0",
     "eslint-config-prettier": "^10.0.1",
