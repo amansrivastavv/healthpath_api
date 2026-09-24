@@ -19,6 +19,7 @@ import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
+      envFilePath: process.env.NODE_ENV === 'production' ? '.env.production' : '.env.local',
       load: [configuration],
     }),
     PrismaModule,

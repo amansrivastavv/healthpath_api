@@ -63,18 +63,18 @@ export class ProvidersService {
 
     if (search) {
       where.OR = [
-        { name: { contains: search, mode: 'insensitive' } },
-        { description: { contains: search, mode: 'insensitive' } },
-        { city: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search } },
+        { description: { contains: search } },
+        { city: { contains: search } },
       ];
     }
 
     if (city) {
-      where.city = { equals: city, mode: 'insensitive' };
+      where.city = { equals: city };
     }
 
     if (state) {
-      where.state = { equals: state, mode: 'insensitive' };
+      where.state = { equals: state };
     }
 
     if (type) {

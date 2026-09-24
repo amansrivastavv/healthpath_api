@@ -58,7 +58,6 @@ A production-ready NestJS REST API backend for the HealthPath platform.
 │   ├── r2/                   # Cloudflare R2 object storage module
 │   ├── app.module.ts         # Root application module
 │   └── main.ts               # Server entrypoint & dual Swagger setup
-├── docker-compose.yml        # Database container orchestration
 ├── package.json              # Node dependencies & CLI commands
 └── vercel.json               # Vercel build and rewrites configuration
 ```

@@ -71,15 +71,15 @@ export class DoctorsService {
       verificationStatus: VerificationStatus.VERIFIED,
       provider: {
         isActive: true,
-        ...(city ? { city: { equals: city, mode: 'insensitive' } } : {}),
+        ...(city ? { city: { equals: city } } : {}),
         ...(providerType ? { type: providerType } : {}),
       },
     };
 
     if (search) {
       where.OR = [
-        { fullName: { contains: search, mode: 'insensitive' } },
-        { qualification: { contains: search, mode: 'insensitive' } },
+        { fullName: { contains: search } },
+        { qualification: { contains: search } },
       ];
     }
 

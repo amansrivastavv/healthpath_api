@@ -114,9 +114,9 @@ export class AdminDoctorsService {
 
     if (search) {
       where.OR = [
-        { fullName: { contains: search, mode: 'insensitive' } },
-        { qualification: { contains: search, mode: 'insensitive' } },
-        { medicalRegistrationNumber: { contains: search, mode: 'insensitive' } },
+        { fullName: { contains: search } },
+        { qualification: { contains: search } },
+        { medicalRegistrationNumber: { contains: search } },
       ];
     }
 
@@ -133,10 +133,10 @@ export class AdminDoctorsService {
       providerWhere.type = providerType;
     }
     if (city) {
-      providerWhere.city = { equals: city, mode: 'insensitive' };
+      providerWhere.city = { equals: city };
     }
     if (state) {
-      providerWhere.state = { equals: state, mode: 'insensitive' };
+      providerWhere.state = { equals: state };
     }
     if (Object.keys(providerWhere).length > 0) {
       where.provider = providerWhere;

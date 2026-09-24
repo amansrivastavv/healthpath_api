@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider  = "mysql"
   url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
@@ -151,7 +151,7 @@ model Provider {
   // Images
   profileImage            String?             @map("profile_image")
   coverImage              String?             @map("cover_image")
-  coverImages             String[]            @default([]) @map("cover_images")
+  coverImages             Json            @default("[]") @map("cover_images")
 
   // Status flags
   isVerified              Boolean             @default(false) @map("is_verified")
@@ -214,14 +214,14 @@ model Doctor {
   experienceYears           Int                 @default(0) @map("experience_years")
   medicalRegistrationNumber String              @unique @map("medical_registration_number")
   gender                    Gender
-  languages                 String[]            @default([])
+  languages                 Json            @default("[]")
   about                     String?             @db.Text
 
   consultationFee           Float               @default(0) @map("consultation_fee")
   onlineConsultationFee     Float?              @map("online_consultation_fee")
   inPersonConsultationFee   Float?              @map("in_person_consultation_fee")
   homeVisitFee              Float?              @map("home_visit_fee")
-  consultationTypes         ConsultationType[]  @default([IN_PERSON]) @map("consultation_types")
+  consultationTypes         Json              @default("[\"IN_PERSON\"]") @map("consultation_types")
 
   providerId                String              @map("provider_id")
   provider                  Provider            @relation(fields: [providerId], references: [id], onDelete: Cascade)
