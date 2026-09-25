@@ -12,8 +12,6 @@ A production-ready NestJS REST API backend for the HealthPath platform.
 - **Security**: Helmet (HTTP security headers) & CORS configuration
 - **Validation & Transformation**: `class-validator` & `class-transformer`
 
----
-
 ## Project Structure
 
 ```
