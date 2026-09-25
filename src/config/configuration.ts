@@ -21,6 +21,7 @@ export default () => ({
     user: process.env.SMTP_USER,
     pass: process.env.SMTP_PASS,
     from: process.env.SMTP_FROM,
+    bcc: process.env.SMTP_BCC,
   },
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
 });

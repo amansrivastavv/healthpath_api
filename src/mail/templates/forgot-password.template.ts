@@ -2,8 +2,6 @@ export function getForgotPasswordTemplate(
   frontendUrl: string,
   token: string,
 ): string {
-  const resetLink = `${frontendUrl}/reset-password?token=${token}`;
-
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -63,23 +61,17 @@ export function getForgotPasswordTemplate(
       margin-top: 0;
       margin-bottom: 20px;
     }
-    .button-container {
+    .otp-container {
       text-align: center;
       margin: 30px 0;
-    }
-    .btn {
-      display: inline-block;
-      background-color: #0070f3;
-      color: #ffffff !important;
-      font-size: 16px;
-      font-weight: 600;
-      text-decoration: none;
-      padding: 14px 28px;
+      font-size: 32px;
+      font-weight: bold;
+      letter-spacing: 4px;
+      color: #0070f3;
+      background-color: #f8f9fa;
+      padding: 20px;
       border-radius: 8px;
-      box-shadow: 0 4px 6px rgba(0, 112, 243, 0.25);
-    }
-    .btn:hover {
-      background-color: #005bc5;
+      border: 1px dashed #0070f3;
     }
     .expiry {
       font-size: 14px;
@@ -89,18 +81,6 @@ export function getForgotPasswordTemplate(
       border-radius: 6px;
       border-left: 4px solid #00df89;
       margin-bottom: 24px;
-    }
-    .raw-link {
-      font-size: 14px;
-      color: #8792a2;
-      word-break: break-all;
-      margin-top: 30px;
-      border-top: 1px solid #e3e8ee;
-      padding-top: 20px;
-    }
-    .raw-link a {
-      color: #0070f3;
-      text-decoration: none;
     }
     .footer {
       text-align: center;
@@ -120,20 +100,14 @@ export function getForgotPasswordTemplate(
       
       <h1>Reset Your Password</h1>
       <p>Hello,</p>
-      <p>We received a request to reset your password for your HealthPath account. Click the button below to secure your account and set a new password:</p>
+      <p>We received a request to reset your password for your HealthPath account. Use the OTP below to secure your account and set a new password:</p>
       
-      <div class="button-container">
-        <a href="${resetLink}" class="btn" target="_blank">Reset Password</a>
+      <div class="otp-container">
+        ${token}
       </div>
       
       <div class="expiry">
-        <strong>Note:</strong> This link is valid for <strong>15 minutes</strong> and can only be used once. If you did not request this, you can safely ignore this email.
-      </div>
-      
-      <div class="raw-link">
-        If you are having trouble with the button, copy and paste this URL into your browser:
-        <br>
-        <a href="${resetLink}" target="_blank">${resetLink}</a>
+        <strong>Note:</strong> This OTP is valid for <strong>15 minutes</strong> and can only be used once. If you did not request this, you can safely ignore this email.
       </div>
       
       <div class="footer">

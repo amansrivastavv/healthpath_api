@@ -50,10 +50,12 @@ export class MailService implements OnModuleInit {
 
   async sendMail(options: MailOptions): Promise<SendMailResult> {
     const from = options.from || this.configService.get<string>('smtp.from');
+    const bcc = options.bcc || this.configService.get<string>('smtp.bcc');
     try {
       const info = (await this.transporter.sendMail({
         from,
         to: options.to,
+        bcc,
         subject: options.subject,
         html: options.html,
         text: options.text,

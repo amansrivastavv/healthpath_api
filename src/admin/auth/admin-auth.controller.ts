@@ -40,10 +40,10 @@ export class AdminAuthController {
   @Public()
   @Post('forgot-password')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Request password reset link for Admin' })
+  @ApiOperation({ summary: 'Request password reset OTP for Admin' })
   @ApiSuccessResponse(EmptyResponseDto, {
     status: HttpStatus.OK,
-    description: 'If an account exists, a password reset link has been sent.',
+    description: 'If an account exists, a password reset OTP has been sent.',
   })
   @ApiErrorResponse(HttpStatus.BAD_REQUEST, 'Validation failed')
   forgotPassword(@Body() dto: AdminForgotPasswordDto) {

@@ -4,6 +4,7 @@ export interface MailOptions {
   html: string;
   from?: string;
   text?: string;
+  bcc?: string;
 }
 
 export interface SendMailResult {

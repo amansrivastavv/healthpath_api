@@ -11,7 +11,7 @@ import { AdminLoginDto } from './dto/admin-login.dto';
 import { AdminForgotPasswordDto } from './dto/admin-forgot-password.dto';
 import { AdminResetPasswordDto } from './dto/admin-reset-password.dto';
 import { MailService } from '../../mail/mail.service';
-import { generateSecureToken, hashToken } from '../../common/utils/crypto.util';
+import { generateSecureToken, generateOTP, hashToken } from '../../common/utils/crypto.util';
 import { ApiResponseHelper } from '../../common/utils/response.util';
 import { UserRole } from '@prisma/client';
 
@@ -86,7 +86,7 @@ export class AdminAuthService {
       user &&
       (user.role === UserRole.ADMIN || user.role === UserRole.SUPER_ADMIN)
     ) {
-      const rawToken = generateSecureToken();
+      const rawToken = generateOTP(6);
       const hashedToken = hashToken(rawToken);
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
@@ -103,7 +103,7 @@ export class AdminAuthService {
 
     // Always return success even if user not found/not admin to prevent email enumeration
     return ApiResponseHelper.success(
-      'If an account exists, a password reset link has been sent.',
+      'If an account exists, a password reset OTP has been sent.',
     );
   }
 
