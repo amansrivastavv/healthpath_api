@@ -14,7 +14,7 @@ A production-ready NestJS REST API backend for the HealthPath platform.
 
 ## Project Structure
 
-```
+
 ├── api/
 │   └── index.ts              # Vercel serverless entrypoint
 ├── prisma/
