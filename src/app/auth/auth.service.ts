@@ -13,7 +13,7 @@ import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService } from '../../mail/mail.service';
-import { generateSecureToken, hashToken } from '../../common/utils/crypto.util';
+import { generateSecureToken, generateOTP, hashToken } from '../../common/utils/crypto.util';
 import { ApiResponseHelper } from '../../common/utils/response.util';
 
 @Injectable()
@@ -145,13 +145,16 @@ export class AuthService {
   }
 
   async forgotPassword(dto: ForgotPasswordDto) {
+    this.logger.log(`Forgot password requested for email: ${dto.email}`);
+    
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
       select: { id: true, email: true },
     });
 
     if (user) {
-      const rawToken = generateSecureToken();
+      this.logger.log(`User found in DB for email: ${dto.email}. Generating OTP and sending email...`);
+      const rawToken = generateOTP(6);
       const hashedToken = hashToken(rawToken);
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
 
@@ -164,10 +167,13 @@ export class AuthService {
       });
 
       await this.mailService.sendForgotPasswordEmail(user.email, rawToken);
+      this.logger.log(`Email successfully triggered for: ${dto.email}`);
+    } else {
+      this.logger.warn(`User NOT FOUND in DB for email: ${dto.email}. No email will be sent to prevent enumeration.`);
     }
 
     return ApiResponseHelper.success(
-      'If an account exists, a password reset link has been sent.',
+      'If an account exists, a password reset OTP has been sent.',
     );
   }
 

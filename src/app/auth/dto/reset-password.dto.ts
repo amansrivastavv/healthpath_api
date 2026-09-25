@@ -8,9 +8,9 @@ import {
 } from 'class-validator';
 
 export class ResetPasswordDto {
-  @ApiProperty({ example: 'secure_password_reset_token' })
+  @ApiProperty({ example: '123456', description: 'The 6-digit OTP sent to email' })
   @IsString()
-  @IsNotEmpty({ message: 'Token is required' })
+  @IsNotEmpty({ message: 'Token/OTP is required' })
   token: string;
 
   @ApiProperty({ example: 'NewPassword@123', minLength: 8, maxLength: 100 })
