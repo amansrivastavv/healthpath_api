@@ -21,9 +21,46 @@ All `/api/v1/admin/*` endpoints (except authentication routes) are protected by 
 
 ## 2. AUTHENTICATION
 
-Admin authentication uses JWT Bearer tokens. There is **no public Admin self-registration API**. Admin users are provisioned by system administrators.
+Admin authentication uses JWT Bearer tokens. Dashboard accounts can be created either via self-registration (`POST /api/v1/admin/auth/register`) or provisioned directly by a Super Admin in User Management (`POST /api/v1/admin/users`).
 
-### 2.1 Admin Login
+### 2.1 Create Account for Dashboard (Admin Register)
+- **Endpoint**: `POST /api/v1/admin/auth/register`
+- **Auth**: Public
+- **Request Body**: `application/json`
+```json
+{
+  "fullName": "Dr. Sarah Connor",
+  "email": "sarah.admin@healthpath.com",
+  "password": "AdminPassword123!",
+  "phoneNumber": "+919876543210",
+  "countryCode": "+91"
+}
+```
+- **Validation**:
+  - `fullName`: string, min 2, max 100 characters (Required)
+  - `email`: valid email format, unique (Required)
+  - `password`: min 8, max 100 characters with at least one uppercase letter, one lowercase letter, one number, and one special character (Required)
+  - `phoneNumber`: optional, valid phone number format, unique
+  - `countryCode`: optional, defaults to `+91`
+- **Success Response** (`201 Created`):
+```json
+{
+  "success": true,
+  "message": "Admin account created successfully",
+  "data": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
+      "fullName": "Dr. Sarah Connor",
+      "email": "sarah.admin@healthpath.com",
+      "role": "ADMIN",
+      "status": "ACTIVE"
+    }
+  }
+}
+```
+
+### 2.2 Admin Login
 - **Endpoint**: `POST /api/v1/admin/auth/login`
 - **Auth**: Public
 - **Request Body**: `application/json`
@@ -462,11 +499,12 @@ Verification documents (license, medical registration, facility certificate) can
 
 ## 10. USERS (`/api/v1/admin/users`)
 
-Allows Admin to inspect system users (Patients, Admins, Lab Owners, Technicians).
+Allows Administrators and Super Admins to manage system users (Admins, Lab Owners, Staff, Technicians, and Patients) and assign roles.
 
 ### 10.1 List Users
 - **Method**: `GET`
 - **URL**: `/api/v1/admin/users`
+- **Auth**: Admin Bearer Token (`ADMIN` or `SUPER_ADMIN`)
 - **Query Parameters**:
   - `page` (number, default: 1)
   - `limit` (number, default: 10)
@@ -479,6 +517,104 @@ Allows Admin to inspect system users (Patients, Admins, Lab Owners, Technicians)
 ### 10.2 Get User Details
 - **Method**: `GET`
 - **URL**: `/api/v1/admin/users/{id}`
+- **Auth**: Admin Bearer Token (`ADMIN` or `SUPER_ADMIN`)
+
+### 10.3 Create User / Admin Account
+- **Method**: `POST`
+- **URL**: `/api/v1/admin/users`
+- **Auth**: Admin Bearer Token (`ADMIN` or `SUPER_ADMIN`)
+  - *Note*: Only `SUPER_ADMIN` can create accounts with the `SUPER_ADMIN` role. Regular `ADMIN` accounts can create `ADMIN`, `LAB_OWNER`, `LAB_STAFF`, `TECHNICIAN`, and `PATIENT` accounts.
+- **Request Body**: `application/json`
+```json
+{
+  "fullName": "Staff Administrator",
+  "email": "staff.admin@healthpath.com",
+  "password": "SecurePassword123!",
+  "phoneNumber": "+919876543211",
+  "countryCode": "+91",
+  "role": "ADMIN",
+  "status": "ACTIVE"
+}
+```
+- **Response** (`201 Created`):
+```json
+{
+  "success": true,
+  "message": "User created successfully",
+  "data": {
+    "id": "a54c294f-059a-4831-b64d-28cbdbdf1f30",
+    "fullName": "Staff Administrator",
+    "email": "staff.admin@healthpath.com",
+    "phoneNumber": "+919876543211",
+    "countryCode": "+91",
+    "role": "ADMIN",
+    "status": "ACTIVE",
+    "emailVerified": true,
+    "createdAt": "2026-09-26T13:45:00.000Z"
+  }
+}
+```
+
+### 10.4 Assign User Role (Super Admin Only)
+- **Method**: `PATCH`
+- **URL**: `/api/v1/admin/users/{id}/role`
+- **Auth**: Super Admin Bearer Token (`SUPER_ADMIN` strictly required)
+- **Request Body**: `application/json`
+```json
+{
+  "role": "ADMIN"
+}
+```
+*Allowed roles*: `SUPER_ADMIN`, `ADMIN`, `LAB_OWNER`, `LAB_STAFF`, `TECHNICIAN`, `PATIENT`.
+
+- **Rules & Safeguards**:
+  - Requires `SUPER_ADMIN` role (returns `403 Forbidden` for non-Super Admin).
+  - Super Admins cannot demote their own account away from `SUPER_ADMIN`.
+  - Demoting the last remaining active Super Admin in the system is prevented.
+- **Success Response** (`200 OK`):
+```json
+{
+  "success": true,
+  "message": "User role updated to ADMIN successfully",
+  "data": {
+    "id": "a54c294f-059a-4831-b64d-28cbdbdf1f30",
+    "fullName": "Staff Administrator",
+    "email": "staff.admin@healthpath.com",
+    "role": "ADMIN",
+    "status": "ACTIVE"
+  }
+}
+```
+
+### 10.5 Update User Status
+- **Method**: `PATCH`
+- **URL**: `/api/v1/admin/users/{id}/status`
+- **Auth**: Admin Bearer Token
+- **Request Body**:
+```json
+{
+  "status": "SUSPENDED"
+}
+```
+*Allowed statuses*: `ACTIVE`, `INACTIVE`, `SUSPENDED`, `PENDING_VERIFICATION`.
+
+### 10.6 Update User Profile
+- **Method**: `PATCH`
+- **URL**: `/api/v1/admin/users/{id}`
+- **Auth**: Admin Bearer Token
+- **Request Body**:
+```json
+{
+  "fullName": "Updated Admin Name",
+  "phoneNumber": "+919876543299"
+}
+```
+
+### 10.7 Deactivate User (Super Admin Only)
+- **Method**: `DELETE`
+- **URL**: `/api/v1/admin/users/{id}`
+- **Auth**: Super Admin Bearer Token (`SUPER_ADMIN` strictly required)
+- Soft-deactivates the user (`status = INACTIVE`). Super Admins cannot delete their own account.
 
 ---
 
@@ -486,9 +622,16 @@ Allows Admin to inspect system users (Patients, Admins, Lab Owners, Technicians)
 
 | Admin Screen | API Route | Purpose |
 |--------------|-----------|---------|
+| **Dashboard Signup** | `POST /api/v1/admin/auth/register` | Self-register new dashboard admin account |
 | **Admin Login** | `POST /api/v1/admin/auth/login` | Authenticate Admin & retrieve JWT |
 | **Forgot Password** | `POST /api/v1/admin/auth/forgot-password` | Send password reset link |
 | **Reset Password** | `POST /api/v1/admin/auth/reset-password` | Perform password reset |
+| **User Management** | `GET /api/v1/admin/users` | List platform users with filters |
+| **Add Dashboard User**| `POST /api/v1/admin/users` | Provision admin/staff user |
+| **Assign User Role** | `PATCH /api/v1/admin/users/{id}/role` | Super Admin assigns or changes user role |
+| **Change User Status**| `PATCH /api/v1/admin/users/{id}/status` | Activate or suspend user |
+| **Edit User Profile** | `PATCH /api/v1/admin/users/{id}` | Update user name/phone |
+| **Deactivate User** | `DELETE /api/v1/admin/users/{id}` | Super Admin deactivates account |
 | **Provider List** | `GET /api/v1/admin/providers` | Table view of Hospitals/Clinics/Doctors with filters |
 | **Add Provider** | `POST /api/v1/admin/providers` | Create new Hospital, Clinic, or Individual Doctor |
 | **Provider Details** | `GET /api/v1/admin/providers/{id}` | Detailed facility page |
@@ -505,8 +648,6 @@ Allows Admin to inspect system users (Patients, Admins, Lab Owners, Technicians)
 | **Provider Documents**| `POST/GET /api/v1/admin/providers/{id}/documents` | Upload & view facility certificates |
 | **Doctor Documents** | `POST/GET /api/v1/admin/doctors/{id}/documents` | Upload & view medical licenses |
 | **Audit Document** | `PUT /api/v1/admin/documents/{id}` | Verify/Reject verification document |
-| **User List** | `GET /api/v1/admin/users` | List patients, admins, and lab staff |
-| **User Details** | `GET /api/v1/admin/users/{id}` | Detailed user view |
 
 ---
 
@@ -530,14 +671,15 @@ Allows Admin to inspect system users (Patients, Admins, Lab Owners, Technicians)
 
 ## 13. CRUD CHEAT SHEET
 
-| Module | Create (POST) | List (GET) | Detail (GET) | Update (PUT) | Delete (DELETE) |
-|--------|---------------|------------|--------------|--------------|-----------------|
+| Module | Create (POST) | List (GET) | Detail (GET) | Update (PUT/PATCH) | Delete (DELETE) |
+|--------|---------------|------------|--------------|-------------------|-----------------|
+| **Auth Register** | `/admin/v1/auth/register` | N/A | N/A | N/A | N/A |
+| **Users** | `/admin/v1/users` | `/admin/v1/users` | `/admin/v1/users/{id}` | `/admin/v1/users/{id}`<br>`/admin/v1/users/{id}/role` *(SUPER_ADMIN)*<br>`/admin/v1/users/{id}/status` | `/admin/v1/users/{id}` *(SUPER_ADMIN)* |
 | **Providers** | `/admin/v1/providers` | `/admin/v1/providers` | `/admin/v1/providers/{id}` | `/admin/v1/providers/{id}` | `/admin/v1/providers/{id}` |
 | **Doctors** | `/admin/v1/doctors` | `/admin/v1/doctors` | `/admin/v1/doctors/{id}` | `/admin/v1/doctors/{id}` | `/admin/v1/doctors/{id}` |
 | **Specializations** | `/admin/v1/specializations` | `/admin/v1/specializations` | `/admin/v1/specializations/{id}` | `/admin/v1/specializations/{id}` | `/admin/v1/specializations/{id}` |
 | **Availability** | `/admin/v1/doctors/{id}/availability` | `/admin/v1/doctors/{id}/availability` | N/A | `/admin/v1/doctors/{docId}/availability/{id}` | `/admin/v1/doctors/{docId}/availability/{id}` |
 | **Documents** | `/admin/v1/providers/{id}/documents`<br>`/admin/v1/doctors/{id}/documents` | `/admin/v1/providers/{id}/documents`<br>`/admin/v1/doctors/{id}/documents` | N/A | `/admin/v1/documents/{id}` | `/admin/v1/documents/{id}` |
-| **Users** | N/A | `/admin/v1/users` | `/admin/v1/users/{id}` | N/A | N/A |
 
 ---
 

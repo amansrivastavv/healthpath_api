@@ -2,6 +2,7 @@ import { Body, Controller, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { AdminAuthService } from './admin-auth.service';
 import { AdminLoginDto } from './dto/admin-login.dto';
+import { AdminRegisterDto } from './dto/admin-register.dto';
 import { AdminForgotPasswordDto } from './dto/admin-forgot-password.dto';
 import { AdminResetPasswordDto } from './dto/admin-reset-password.dto';
 import { Public } from '../../common/decorators/public.decorator';
@@ -19,6 +20,24 @@ import {
 })
 export class AdminAuthController {
   constructor(private readonly authService: AdminAuthService) {}
+
+  @Public()
+  @Post('register')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Create account for dashboard',
+    description:
+      'Register a new admin user account to access the dashboard. Creates an ACTIVE admin user and returns access token.',
+  })
+  @ApiSuccessResponse(AdminLoginResponseDto, {
+    status: HttpStatus.CREATED,
+    description: 'Admin account created successfully',
+  })
+  @ApiErrorResponse(HttpStatus.BAD_REQUEST, 'Validation failed')
+  @ApiErrorResponse(HttpStatus.CONFLICT, 'Email or phone number already exists')
+  register(@Body() dto: AdminRegisterDto) {
+    return this.authService.register(dto);
+  }
 
   @Public()
   @Post('login')
