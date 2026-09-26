@@ -6,6 +6,21 @@ import { Public } from '../common/decorators/public.decorator';
 @Controller()
 export class HealthController {
   @Public()
+  @Get()
+  @ApiResponse({ status: 200, description: 'API status and endpoints' })
+  getRoot() {
+    return {
+      name: 'HealthPath Backend API',
+      status: 'online',
+      docs: {
+        patient: '/api/docs',
+        admin: '/admin/docs',
+      },
+      health: '/health',
+    };
+  }
+
+  @Public()
   @Get('health')
   @ApiResponse({ status: 200 })
   getHealth() {
