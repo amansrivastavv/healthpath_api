@@ -1,7 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { R2Service } from '../../r2/r2.service';
 import { ApiResponseHelper } from '../../common/utils/response.util';
 import { GetAppDoctorsDto } from './dto/get-app-doctors.dto';
+import { UpdateDoctorProfileDto } from './dto/update-doctor-profile.dto';
 import { Prisma, VerificationStatus } from '@prisma/client';
 
 const PATIENT_DOCTOR_SELECT = {
@@ -51,7 +53,10 @@ const PATIENT_DOCTOR_SELECT = {
 
 @Injectable()
 export class DoctorsService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly r2Service: R2Service,
+  ) {}
 
   async findAll(dto: GetAppDoctorsDto) {
     const {
@@ -141,5 +146,78 @@ export class DoctorsService {
     }
 
     return ApiResponseHelper.success('Doctor fetched successfully', doctor);
+  }
+
+  async getMe(userId: string) {
+    const doctor = await this.prisma.doctor.findUnique({
+      where: { userId },
+      select: {
+        ...PATIENT_DOCTOR_SELECT,
+        availabilities: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            dayOfWeek: true,
+            startTime: true,
+            endTime: true,
+            slotDuration: true,
+            breakStart: true,
+            breakEnd: true,
+          },
+        },
+      },
+    });
+
+    if (!doctor) {
+      throw new NotFoundException('Doctor profile not found');
+    }
+
+    return ApiResponseHelper.success('Doctor profile fetched successfully', doctor);
+  }
+
+  async updateMe(userId: string, dto: UpdateDoctorProfileDto, profileImageFile?: Express.Multer.File) {
+    const doctor = await this.prisma.doctor.findUnique({ where: { userId } });
+    if (!doctor) {
+      throw new NotFoundException('Doctor profile not found');
+    }
+
+    let profileImageUrl = dto.profileImage;
+    if (profileImageFile) {
+      const uploadResult = await this.r2Service.upload(
+        {
+          buffer: profileImageFile.buffer,
+          originalname: profileImageFile.originalname,
+          mimetype: profileImageFile.mimetype,
+        },
+        'doctors/profiles',
+      );
+      profileImageUrl = uploadResult.url;
+    }
+
+    const updated = await this.prisma.$transaction(async (prisma) => {
+      if (dto.fullName !== undefined) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: { fullName: dto.fullName },
+        });
+      }
+      return await prisma.doctor.update({
+        where: { id: doctor.id },
+        data: {
+          ...(dto.fullName && { fullName: dto.fullName }),
+          ...(profileImageUrl !== undefined && { profileImage: profileImageUrl }),
+          ...(dto.about !== undefined && { about: dto.about }),
+          ...(dto.consultationFee !== undefined && { consultationFee: dto.consultationFee }),
+          ...(dto.onlineConsultationFee !== undefined && { onlineConsultationFee: dto.onlineConsultationFee }),
+          ...(dto.inPersonConsultationFee !== undefined && { inPersonConsultationFee: dto.inPersonConsultationFee }),
+          ...(dto.homeVisitFee !== undefined && { homeVisitFee: dto.homeVisitFee }),
+          ...(dto.consultationTypes && { consultationTypes: dto.consultationTypes }),
+          ...(dto.languages && { languages: dto.languages }),
+        },
+        select: PATIENT_DOCTOR_SELECT,
+      });
+    });
+
+    return ApiResponseHelper.success('Doctor profile updated successfully', updated);
   }
 }

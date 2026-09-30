@@ -16,15 +16,15 @@ export class PrismaService
   async onModuleInit() {
     try {
       await this.$connect();
-      this.logger.log('Successfully connected to PostgreSQL database');
+      this.logger.log('Successfully connected to database');
     } catch (error) {
-      this.logger.error('Failed to connect to PostgreSQL database', error);
+      this.logger.error('Failed to connect to database', error);
       throw error;
     }
   }
 
   async onModuleDestroy() {
     await this.$disconnect();
-    this.logger.log('Disconnected from PostgreSQL database');
+    this.logger.log('Disconnected from database');
   }
 }

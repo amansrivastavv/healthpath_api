@@ -1,0 +1,14 @@
+[33mab605ac[m auth admin
+[33m1a9f028[m feat: implement 6-digit OTP for forgot password and add BCC support (#1)
+[33mb388fee[m feat: implement 6-digit OTP for forgot password and add BCC support
+[33me5f96a7[m update 6
+[33m2094a63[m udpate porstgrey changed to mysql
+[33m2d80693[m on board docter api added
+[33md155b1d[m profile api updated
+[33md3c0f3a[m list users api
+[33mf0d2aa0[m api updated
+[33m54d37dd[m admin auth and providers api
+[33m411f72b[m providers api added
+[33m4701557[m admin and app api seperated
+[33mc3779e1[m forgot pass api added
+[33mced4f3d[m first commit

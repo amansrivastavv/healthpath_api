@@ -8,6 +8,7 @@ import {
   IsUUID,
   IsArray,
   Min,
+  IsEmail,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
@@ -22,10 +23,30 @@ export class CreateDoctorDto {
   )
   fullName: string;
 
-  @ApiProperty({ example: 'd3b07384-d113-4956-a5e2-e1c7d23d8c8d' })
+  @ApiProperty({ example: 'doctor@example.com' })
+  @IsEmail({}, { message: 'Valid email is required' })
+  @IsNotEmpty({ message: 'Email is required' })
+  @Transform(({ value }: { value: unknown }): unknown =>
+    typeof value === 'string' ? value.trim().toLowerCase() : value,
+  )
+  email: string;
+
+  @ApiPropertyOptional({ example: '+1234567890' })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiPropertyOptional({ example: 'd3b07384-d113-4956-a5e2-e1c7d23d8c8d' })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed === '' || trimmed === 'undefined' || trimmed === 'null' ? undefined : trimmed;
+    }
+    return value;
+  })
+  @IsOptional()
   @IsUUID('4', { message: 'Invalid specialization ID' })
-  @IsNotEmpty({ message: 'Specialization ID is required' })
-  specializationId: string;
+  specializationId?: string;
 
   @ApiProperty({ example: 'MBBS, MD (Cardiology)' })
   @IsString()
@@ -48,7 +69,12 @@ export class CreateDoctorDto {
   gender: Gender;
 
   @ApiPropertyOptional({ example: ['English', 'Hindi'], type: [String] })
-  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').map((v) => v.trim()).filter(Boolean);
+    }
+    return value;
+  })
   @IsArray()
   @IsString({ each: true })
   languages?: string[];
@@ -91,15 +117,27 @@ export class CreateDoctorDto {
     isArray: true,
     example: [ConsultationType.IN_PERSON, ConsultationType.ONLINE],
   })
-  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      return value.split(',').map((v) => v.trim()).filter(Boolean);
+    }
+    return value;
+  })
   @IsArray()
   @IsEnum(ConsultationType, { each: true, message: 'Invalid consultation type' })
   consultationTypes?: ConsultationType[];
 
-  @ApiProperty({ example: 'e5f6g7h8-d113-4956-a5e2-e1c7d23d8c8d' })
+  @ApiPropertyOptional({ example: 'e5f6g7h8-d113-4956-a5e2-e1c7d23d8c8d' })
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      const trimmed = value.trim();
+      return trimmed === '' || trimmed === 'undefined' || trimmed === 'null' ? undefined : trimmed;
+    }
+    return value;
+  })
+  @IsOptional()
   @IsUUID('4', { message: 'Invalid provider ID' })
-  @IsNotEmpty({ message: 'Provider ID is required' })
-  providerId: string;
+  providerId?: string;
 
   @ApiPropertyOptional({ example: true, type: 'boolean' })
   @IsOptional()
