@@ -10,6 +10,7 @@ import {
   VersioningType,
   Logger,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import helmet from 'helmet';
 import { ValidationError } from 'class-validator';
@@ -55,10 +56,14 @@ async function bootstrap() {
 
   app.enableCors({
     origin: (origin, callback) => {
-      if (!origin || origin.startsWith('http://localhost:') || allowedOrigins.includes(origin)) {
+      if (
+        !origin ||
+        origin.startsWith('http://localhost:') ||
+        allowedOrigins.includes(origin)
+      ) {
         callback(null, true);
       } else {
-        callback(new Error('Not allowed by CORS'));
+        callback(new ForbiddenException(`Not allowed by CORS: ${origin}`));
       }
     },
     credentials: true,
