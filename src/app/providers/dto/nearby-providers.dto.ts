@@ -5,9 +5,12 @@ import {
   IsInt,
   Min,
   Max,
+  IsEnum,
+  IsBooleanString,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
+import { ProviderType } from '@prisma/client';
 
 export class NearbyProvidersDto {
   @ApiProperty({ description: 'Latitude of the search point', example: 28.4595 })
@@ -33,6 +36,19 @@ export class NearbyProvidersDto {
   @Min(1, { message: 'Radius must be at least 1 km' })
   @Max(100, { message: 'Radius cannot exceed 100 km' })
   radius?: number = 10;
+
+  @ApiPropertyOptional({
+    enum: ProviderType,
+    description: 'Filter by provider type (e.g. LAB, CLINIC, HOSPITAL, INDIVIDUAL_DOCTOR, BOTH)',
+  })
+  @IsOptional()
+  @IsEnum(ProviderType)
+  type?: ProviderType;
+
+  @ApiPropertyOptional({ description: 'Filter by home collection availability ("true" or "false")', example: 'true' })
+  @IsOptional()
+  @IsBooleanString({ message: 'homeCollection must be true or false' })
+  homeCollection?: string;
 
   @ApiPropertyOptional({ description: 'Page number', example: 1, minimum: 1 })
   @IsOptional()

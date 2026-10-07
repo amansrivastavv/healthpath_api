@@ -31,20 +31,38 @@ export class GetAppDoctorsDto {
   @IsString()
   city?: string;
 
+  @ApiPropertyOptional({ description: 'Filter by state' })
+  @IsOptional()
+  @IsString()
+  state?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by pincode' })
+  @IsOptional()
+  @IsString()
+  pincode?: string;
+
   @ApiPropertyOptional({ description: 'Filter by Specialization UUID' })
   @IsOptional()
   @IsUUID('4')
   specializationId?: string;
+
+  @ApiPropertyOptional({ description: 'Filter by Condition UUID' })
+  @IsOptional()
+  @IsUUID('4')
+  conditionId?: string;
 
   @ApiPropertyOptional({ enum: ProviderType, description: 'Filter by provider type (CLINIC, HOSPITAL, INDIVIDUAL_DOCTOR)' })
   @IsOptional()
   @IsEnum(ProviderType)
   providerType?: ProviderType;
 
-  @ApiPropertyOptional({ default: 'createdAt', enum: ['fullName', 'experienceYears', 'createdAt'] })
+  @ApiPropertyOptional({
+    default: 'createdAt',
+    enum: ['fullName', 'experienceYears', 'consultationFee', 'rating', 'createdAt'],
+  })
   @IsOptional()
   @IsString()
-  @IsIn(['fullName', 'experienceYears', 'createdAt'])
+  @IsIn(['fullName', 'experienceYears', 'consultationFee', 'rating', 'createdAt'])
   sortBy?: string = 'createdAt';
 
   @ApiPropertyOptional({ default: 'desc', enum: ['asc', 'desc'] })

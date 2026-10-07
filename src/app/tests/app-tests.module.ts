@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
+import { TestsController } from './tests.controller';
+import { TestsService } from './tests.service';
 
-/**
- * Placeholder module for App Tests feature.
- * Will contain test catalog, booking, and results viewing.
- */
-@Module({})
+@Module({
+  controllers: [TestsController],
+  providers: [TestsService],
+  exports: [TestsService],
+})
 export class AppTestsModule {}

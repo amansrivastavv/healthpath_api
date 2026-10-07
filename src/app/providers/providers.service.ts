@@ -118,11 +118,12 @@ export class ProvidersService {
   /**
    * GET /providers/nearby — find providers within a radius using the Haversine formula.
    */
+  /**
+   * GET /providers/nearby — find providers within a radius using the Haversine formula.
+   */
   async findNearby(dto: NearbyProvidersDto) {
-    const { latitude, longitude, radius, page, limit } = dto;
-    const skip = (page! - 1) * limit!;
-
-    const EARTH_RADIUS_KM = 6371;
+    const { latitude, longitude, radius = 10, page = 1, limit = 10, type, homeCollection } = dto;
+    const skip = (page - 1) * limit;
 
     const providers = await this.prisma.$queryRaw<
       Array<Record<string, unknown>>
@@ -131,26 +132,26 @@ export class ProvidersService {
         id, name, slug, type, description, email, phone, website,
         address, city, state, country, pincode,
         latitude, longitude,
-        established_year AS "establishedYear",
-        emergency_available AS "emergencyAvailable",
-        available_24x7 AS "available24x7",
-        parking_available AS "parkingAvailable",
-        pharmacy_available AS "pharmacyAvailable",
-        wheelchair_accessible AS "wheelchairAccessible",
-        rating, total_ratings AS "totalRatings",
-        opening_hours AS "openingHours",
-        home_collection_available AS "homeCollectionAvailable",
-        profile_image AS "profileImage",
-        cover_image AS "coverImage",
-        cover_images AS "coverImages",
-        is_verified AS "isVerified",
-        verification_status AS "verificationStatus",
-        is_active AS "isActive",
-        is_featured AS "isFeatured",
-        created_at AS "createdAt",
-        updated_at AS "updatedAt",
+        established_year AS establishedYear,
+        emergency_available AS emergencyAvailable,
+        available_24x7 AS available24x7,
+        parking_available AS parkingAvailable,
+        pharmacy_available AS pharmacyAvailable,
+        wheelchair_accessible AS wheelchairAccessible,
+        rating, total_ratings AS totalRatings,
+        opening_hours AS openingHours,
+        home_collection_available AS homeCollectionAvailable,
+        profile_image AS profileImage,
+        cover_image AS coverImage,
+        cover_images AS coverImages,
+        is_verified AS isVerified,
+        verification_status AS verificationStatus,
+        is_active AS isActive,
+        is_featured AS isFeatured,
+        created_at AS createdAt,
+        updated_at AS updatedAt,
         (
-          ${EARTH_RADIUS_KM} * acos(
+          6371 * acos(
             cos(radians(${latitude})) * cos(radians(latitude))
             * cos(radians(longitude) - radians(${longitude}))
             + sin(radians(${latitude})) * sin(radians(latitude))
@@ -160,48 +161,80 @@ export class ProvidersService {
       WHERE is_active = true
         AND latitude IS NOT NULL
         AND longitude IS NOT NULL
-        AND (
-          ${EARTH_RADIUS_KM} * acos(
-            cos(radians(${latitude})) * cos(radians(latitude))
-            * cos(radians(longitude) - radians(${longitude}))
-            + sin(radians(${latitude})) * sin(radians(latitude))
-          )
-        ) <= ${radius}
+        AND (${type === undefined} = true OR (${type === 'LAB'} = true AND type IN ('LAB', 'BOTH')) OR type = ${type || ''})
+        AND (${homeCollection === undefined} = true OR home_collection_available = ${homeCollection === 'true'})
+      HAVING distance <= ${radius}
       ORDER BY distance ASC
       LIMIT ${limit} OFFSET ${skip}
     `;
 
     const countResult = await this.prisma.$queryRaw<
-      Array<{ count: bigint }>
+      Array<{ count: number | bigint }>
     >`
-      SELECT COUNT(*)::bigint AS count
-      FROM providers
-      WHERE is_active = true
-        AND latitude IS NOT NULL
-        AND longitude IS NOT NULL
-        AND (
-          ${EARTH_RADIUS_KM} * acos(
+      SELECT COUNT(*) as count FROM (
+        SELECT id,
+        (
+          6371 * acos(
             cos(radians(${latitude})) * cos(radians(latitude))
             * cos(radians(longitude) - radians(${longitude}))
             + sin(radians(${latitude})) * sin(radians(latitude))
           )
-        ) <= ${radius}
+        ) AS distance
+        FROM providers
+        WHERE is_active = true
+          AND latitude IS NOT NULL
+          AND longitude IS NOT NULL
+          AND (${type === undefined} = true OR (${type === 'LAB'} = true AND type IN ('LAB', 'BOTH')) OR type = ${type || ''})
+          AND (${homeCollection === undefined} = true OR home_collection_available = ${homeCollection === 'true'})
+        HAVING distance <= ${radius}
+      ) as sub
     `;
 
     const total = Number(countResult[0]?.count ?? 0);
 
-    const items = providers.map((p) => ({
-      ...p,
-      distance: Math.round((p.distance as number) * 100) / 100,
-    }));
+    const items = providers.map((p) => {
+      let openingHours = p.openingHours;
+      if (typeof openingHours === 'string') {
+        try {
+          openingHours = JSON.parse(openingHours);
+        } catch {
+          // keep as is
+        }
+      }
+
+      let coverImages = p.coverImages;
+      if (typeof coverImages === 'string') {
+        try {
+          coverImages = JSON.parse(coverImages);
+        } catch {
+          coverImages = [];
+        }
+      }
+
+      return {
+        ...p,
+        distance: Math.round((p.distance as number) * 100) / 100,
+        isVerified: Boolean(p.isVerified),
+        isActive: Boolean(p.isActive),
+        isFeatured: Boolean(p.isFeatured),
+        homeCollectionAvailable: Boolean(p.homeCollectionAvailable),
+        emergencyAvailable: Boolean(p.emergencyAvailable),
+        available24x7: Boolean(p.available24x7),
+        parkingAvailable: Boolean(p.parkingAvailable),
+        pharmacyAvailable: Boolean(p.pharmacyAvailable),
+        wheelchairAccessible: Boolean(p.wheelchairAccessible),
+        openingHours,
+        coverImages,
+      };
+    });
 
     return ApiResponseHelper.success('Nearby providers fetched successfully', {
       items,
       pagination: {
-        page: page!,
-        limit: limit!,
+        page,
+        limit,
         total,
-        totalPages: Math.ceil(total / limit!),
+        totalPages: Math.ceil(total / limit),
       },
     });
   }

@@ -21,6 +21,8 @@ const PATIENT_DOCTOR_SELECT = {
   inPersonConsultationFee: true,
   homeVisitFee: true,
   consultationTypes: true,
+  rating: true,
+  totalRatings: true,
   isActive: true,
   verificationStatus: true,
   createdAt: true,
@@ -64,7 +66,10 @@ export class DoctorsService {
       limit = 10,
       search,
       city,
+      state,
+      pincode,
       specializationId,
+      conditionId,
       providerType,
       sortBy = 'createdAt',
       sortOrder = 'desc',
@@ -77,6 +82,8 @@ export class DoctorsService {
       provider: {
         isActive: true,
         ...(city ? { city: { equals: city } } : {}),
+        ...(state ? { state: { equals: state } } : {}),
+        ...(pincode ? { pincode: { equals: pincode } } : {}),
         ...(providerType ? { type: providerType } : {}),
       },
     };
@@ -90,6 +97,14 @@ export class DoctorsService {
 
     if (specializationId) {
       where.specializationId = specializationId;
+    }
+
+    if (conditionId) {
+      where.conditions = {
+        some: {
+          conditionId,
+        },
+      };
     }
 
     const [items, total] = await Promise.all([
@@ -138,6 +153,19 @@ export class DoctorsService {
             breakEnd: true,
           },
         },
+        conditions: {
+          select: {
+            condition: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+                icon: true,
+                description: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -145,7 +173,13 @@ export class DoctorsService {
       throw new NotFoundException('Doctor not found');
     }
 
-    return ApiResponseHelper.success('Doctor fetched successfully', doctor);
+    const { conditions, ...rest } = doctor;
+    const responseData = {
+      ...rest,
+      conditions: conditions ? conditions.map((c) => c.condition) : [],
+    };
+
+    return ApiResponseHelper.success('Doctor fetched successfully', responseData);
   }
 
   async getMe(userId: string) {

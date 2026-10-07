@@ -17,6 +17,17 @@ export class AdminDoctorsService {
     private readonly r2Service: R2Service,
   ) {}
 
+  private mapDoctorResponse(doctor: any) {
+    if (!doctor) return doctor;
+    const { user, ...rest } = doctor;
+    return {
+      ...rest,
+      email: user?.email || null,
+      phone: user?.phoneNumber || null,
+      user, // keeping the original user object just in case
+    };
+  }
+
   async create(dto: CreateDoctorDto, profileImageFile?: Express.Multer.File) {
     // Auto-create Specialization if missing
     let finalSpecializationId = dto.specializationId;
@@ -154,7 +165,7 @@ export class AdminDoctorsService {
     });
 
     this.logger.log(`Created doctor: ${doctor.id}`);
-    return ApiResponseHelper.success('Doctor created successfully', doctor);
+    return ApiResponseHelper.success('Doctor created successfully', this.mapDoctorResponse(doctor));
   }
 
   async findAll(dto: GetDoctorsDto) {
@@ -245,7 +256,7 @@ export class AdminDoctorsService {
     ]);
 
     return ApiResponseHelper.success('Doctors fetched successfully', {
-      items,
+      items: items.map((item) => this.mapDoctorResponse(item)),
       pagination: {
         page,
         limit,
@@ -279,7 +290,7 @@ export class AdminDoctorsService {
       throw new NotFoundException('Doctor not found');
     }
 
-    return ApiResponseHelper.success('Doctor fetched successfully', doctor);
+    return ApiResponseHelper.success('Doctor fetched successfully', this.mapDoctorResponse(doctor));
   }
 
   async update(id: string, dto: UpdateDoctorDto, profileImageFile?: Express.Multer.File) {
@@ -407,7 +418,7 @@ export class AdminDoctorsService {
     });
 
     this.logger.log(`Updated doctor: ${id}`);
-    return ApiResponseHelper.success('Doctor updated successfully', updated);
+    return ApiResponseHelper.success('Doctor updated successfully', this.mapDoctorResponse(updated));
   }
 
   async remove(id: string) {
