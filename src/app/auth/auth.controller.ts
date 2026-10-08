@@ -5,6 +5,7 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { Public } from '../../common/decorators/public.decorator';
 import { UserResponseDto, EmptyResponseDto } from './dto/user-response.dto';
 import { LoginResponseDto } from './dto/login-response.dto';
@@ -47,6 +48,19 @@ export class AuthController {
   @ApiErrorResponse(HttpStatus.UNAUTHORIZED, 'Invalid email or password')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Public()
+  @Post('google')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Login or Register with Google' })
+  @ApiSuccessResponse(LoginResponseDto, {
+    status: HttpStatus.OK,
+    description: 'Google login successful',
+  })
+  @ApiErrorResponse(HttpStatus.UNAUTHORIZED, 'Invalid Google token')
+  googleLogin(@Body() dto: GoogleLoginDto) {
+    return this.authService.googleLogin(dto);
   }
 
   @Post('logout')

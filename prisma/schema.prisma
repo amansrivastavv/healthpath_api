@@ -25,11 +25,18 @@ enum UserStatus {
   PENDING_VERIFICATION
 }
 
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
 model User {
   id              String      @id @default(uuid())
   fullName        String      @map("full_name")
   email           String      @unique
-  password        String
+  password        String?
+  authProvider    AuthProvider @default(LOCAL) @map("auth_provider")
+  googleId        String?     @unique @map("google_id")
 
   phoneNumber     String?     @unique @map("phone_number")
   countryCode     String?     @map("country_code")
@@ -59,6 +66,7 @@ model User {
   @@index([role])
   @@index([status])
   @@index([passwordResetToken])
+  @@index([googleId])
 
   @@map("users")
 }

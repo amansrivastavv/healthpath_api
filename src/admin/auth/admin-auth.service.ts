@@ -141,6 +141,12 @@ export class AdminAuthService {
       throw new UnauthorizedException('Your account has been deactivated or suspended');
     }
 
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'Invalid email or password. Please sign in with Google.',
+      );
+    }
+
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {

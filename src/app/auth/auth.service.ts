@@ -12,7 +12,9 @@ import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { MailService } from '../../mail/mail.service';
+import { OAuth2Client } from 'google-auth-library';
 import { generateSecureToken, generateOTP, hashToken } from '../../common/utils/crypto.util';
 import { ApiResponseHelper } from '../../common/utils/response.util';
 
@@ -108,6 +110,12 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
+    if (!user.password) {
+      throw new UnauthorizedException(
+        'Invalid email or password. Please sign in with Google.',
+      );
+    }
+
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
 
     if (!isPasswordValid) {
@@ -138,6 +146,81 @@ export class AuthService {
       accessToken,
       user: userProfile,
     });
+  }
+
+  async googleLogin(dto: GoogleLoginDto) {
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    
+    try {
+      const ticket = await client.verifyIdToken({
+        idToken: dto.token,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      
+      if (!payload || !payload.email) {
+        throw new UnauthorizedException('Invalid Google token');
+      }
+
+      const { email, name, picture, sub: googleId } = payload;
+
+      let user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        user = await this.prisma.user.create({
+          data: {
+            email,
+            fullName: name || 'Google User',
+            profileImage: picture,
+            authProvider: 'GOOGLE',
+            googleId,
+            emailVerified: true,
+          },
+        });
+        this.logger.log(`New user registered via Google: ${user.email}`);
+      } else {
+        if (!user.googleId) {
+          user = await this.prisma.user.update({
+            where: { id: user.id },
+            data: { 
+              googleId, 
+              authProvider: 'GOOGLE',
+              profileImage: user.profileImage || picture,
+            }
+          });
+        }
+      }
+
+      const jwtPayload = {
+        sub: user.id,
+        email: user.email,
+        role: user.role,
+      };
+
+      const accessToken = await this.jwtService.signAsync(jwtPayload);
+
+      this.logger.log(`User logged in via Google: ${user.email}`);
+
+      const userProfile = {
+        id: user.id,
+        fullName: user.fullName,
+        email: user.email,
+        profileImage: user.profileImage,
+        phoneNumber: user.phoneNumber,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      };
+
+      return ApiResponseHelper.success('Google login successful', {
+        accessToken,
+        user: userProfile,
+      });
+    } catch (error) {
+      this.logger.error(`Google login failed: ${error.message}`);
+      throw new UnauthorizedException('Invalid Google token');
+    }
   }
 
   logout() {
