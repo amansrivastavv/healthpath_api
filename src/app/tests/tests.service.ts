@@ -58,6 +58,10 @@ export class TestsService {
         { shortDescription: { contains: search } },
         { description: { contains: search } },
       ];
+      
+      this.prisma.searchLog.create({
+        data: { searchQuery: search, category: 'TEST' },
+      }).catch((e) => console.error('Error logging search', e));
     }
 
     if (conditionId) {
@@ -214,6 +218,12 @@ export class TestsService {
     if (!test) {
       throw new NotFoundException('Test not found');
     }
+
+    // Analytics: Increment Profile Views
+    this.prisma.test.update({
+      where: { id: test.id },
+      data: { profileViews: { increment: 1 } },
+    }).catch((e) => console.error('Error incrementing view count', e));
 
     const result = {
       id: test.id,

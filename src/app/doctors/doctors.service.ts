@@ -93,6 +93,10 @@ export class DoctorsService {
         { fullName: { contains: search } },
         { qualification: { contains: search } },
       ];
+      
+      this.prisma.searchLog.create({
+        data: { searchQuery: search, category: 'DOCTOR' },
+      }).catch((e) => console.error('Error logging search', e));
     }
 
     if (specializationId) {
@@ -172,6 +176,12 @@ export class DoctorsService {
     if (!doctor) {
       throw new NotFoundException('Doctor not found');
     }
+
+    // Analytics: Increment Profile Views
+    this.prisma.doctor.update({
+      where: { id: doctor.id },
+      data: { profileViews: { increment: 1 } },
+    }).catch((e) => console.error('Error incrementing view count', e));
 
     const { conditions, ...rest } = doctor;
     const responseData = {

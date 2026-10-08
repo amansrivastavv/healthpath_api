@@ -83,6 +83,10 @@ export class ConditionsService {
         { name: { contains: search } },
         { description: { contains: search } },
       ];
+      
+      this.prisma.searchLog.create({
+        data: { searchQuery: search, category: 'CONDITION' },
+      }).catch((e) => console.error('Error logging search', e));
     }
 
     const [items, total] = await Promise.all([
@@ -159,6 +163,12 @@ export class ConditionsService {
     if (!condition) {
       throw new NotFoundException('Condition not found');
     }
+
+    // Analytics: Increment Profile Views
+    this.prisma.condition.update({
+      where: { id: condition.id },
+      data: { profileViews: { increment: 1 } },
+    }).catch((e) => console.error('Error incrementing view count', e));
 
     return ApiResponseHelper.success('Condition details fetched successfully', {
       id: condition.id,

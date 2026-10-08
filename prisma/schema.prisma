@@ -57,6 +57,7 @@ model User {
   // Relations
   providers       Provider[]
   doctorProfile   Doctor?
+  searchLogs      SearchLog[]
 
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
@@ -246,6 +247,7 @@ model Doctor {
   // Ratings & metrics
   rating                    Float?              @default(0)
   totalRatings              Int                 @default(0) @map("total_ratings")
+  profileViews              Int                 @default(0) @map("profile_views")
 
   availabilities            DoctorAvailability[]
   documents                 VerificationDocument[]
@@ -316,6 +318,7 @@ model Condition {
   icon        String?
   description String?           @db.Text
   isActive    Boolean           @default(true) @map("is_active")
+  profileViews Int              @default(0) @map("profile_views")
 
   // Relations
   doctors     DoctorCondition[]
@@ -358,6 +361,7 @@ model Test {
   discountPrice    Float?          @map("discount_price")
   isActive         Boolean         @default(true) @map("is_active")
   isFeatured       Boolean         @default(false) @map("is_featured")
+  profileViews     Int             @default(0) @map("profile_views")
 
   // Relations
   conditions       TestCondition[]
@@ -408,4 +412,20 @@ model ProviderTest {
   @@index([price])
   @@index([isActive])
   @@map("provider_tests")
+}
+
+// ─── Analytics / Tracking ────────────────────────────────────────
+
+model SearchLog {
+  id          String   @id @default(uuid())
+  userId      String?  @map("user_id")
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  searchQuery String   @map("search_query")
+  category    String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([category])
+  @@index([createdAt])
+  @@map("search_logs")
 }
