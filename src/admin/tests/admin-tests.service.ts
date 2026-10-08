@@ -45,7 +45,7 @@ export class AdminTestsService {
   }
 
   async update(id: string, dto: UpdateTestDto) {
-    let slug = undefined;
+    let slug: string | undefined = undefined;
     if (dto.name) {
       slug = this.generateSlug(dto.name);
       const exists = await this.prisma.test.findFirst({

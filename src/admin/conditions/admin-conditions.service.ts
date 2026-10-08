@@ -45,7 +45,7 @@ export class AdminConditionsService {
   }
 
   async update(id: string, dto: UpdateConditionDto) {
-    let slug = undefined;
+    let slug: string | undefined = undefined;
     if (dto.name) {
       slug = this.generateSlug(dto.name);
       const exists = await this.prisma.condition.findFirst({
