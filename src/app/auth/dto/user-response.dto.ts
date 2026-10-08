@@ -10,6 +10,9 @@ export class UserResponseDto {
   @ApiProperty({ example: 'aman@healthpath.com' })
   email: string;
 
+  @ApiProperty({ example: 'email', enum: ['email', 'google'] })
+  authProvider: string;
+
   @ApiProperty({ example: null, nullable: true })
   profileImage: string | null;
 

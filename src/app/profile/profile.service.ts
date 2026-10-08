@@ -32,6 +32,7 @@ export class ProfileService {
         id: true,
         fullName: true,
         email: true,
+        authProvider: true,
         profileImage: true,
         phoneNumber: true,
         createdAt: true,
@@ -43,9 +44,14 @@ export class ProfileService {
       throw new NotFoundException('User profile not found');
     }
 
+    const mappedUser = {
+      ...user,
+      authProvider: user.authProvider === 'LOCAL' ? 'email' : 'google',
+    };
+
     return {
       success: true,
-      data: user,
+      data: mappedUser,
     };
   }
 
@@ -71,6 +77,7 @@ export class ProfileService {
         id: true,
         fullName: true,
         email: true,
+        authProvider: true,
         profileImage: true,
         phoneNumber: true,
         createdAt: true,
@@ -80,10 +87,15 @@ export class ProfileService {
 
     this.logger.log(`User profile updated for user ID: ${userId}`);
 
+    const mappedUser = {
+      ...updatedUser,
+      authProvider: updatedUser.authProvider === 'LOCAL' ? 'email' : 'google',
+    };
+
     return {
       success: true,
       message: 'Profile updated successfully',
-      data: updatedUser,
+      data: mappedUser,
     };
   }
 
@@ -111,6 +123,7 @@ export class ProfileService {
         id: true,
         fullName: true,
         email: true,
+        authProvider: true,
         profileImage: true,
         phoneNumber: true,
         createdAt: true,
@@ -120,10 +133,15 @@ export class ProfileService {
 
     this.logger.log(`Profile picture uploaded for user ID: ${userId}`);
 
+    const mappedUser = {
+      ...updatedUser,
+      authProvider: updatedUser.authProvider === 'LOCAL' ? 'email' : 'google',
+    };
+
     return {
       success: true,
       message: 'Profile picture uploaded successfully',
-      data: updatedUser,
+      data: mappedUser,
     };
   }
 
