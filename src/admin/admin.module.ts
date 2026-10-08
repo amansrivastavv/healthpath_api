@@ -10,6 +10,7 @@ import { AdminReportsModule } from './reports/admin-reports.module';
 import { AdminNotificationsModule } from './notifications/admin-notifications.module';
 import { AdminSettingsModule } from './settings/admin-settings.module';
 import { AdminConditionsModule } from './conditions/admin-conditions.module';
+import { AdminAnalyticsModule } from './analytics/admin-analytics.module';
 
 /**
  * Aggregate module for all admin feature modules.
@@ -32,6 +33,7 @@ import { AdminConditionsModule } from './conditions/admin-conditions.module';
     AdminNotificationsModule,
     AdminSettingsModule,
     AdminConditionsModule,
+    AdminAnalyticsModule,
   ],
 })
 export class AdminModule {}
