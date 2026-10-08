@@ -7,10 +7,6 @@ export class UpdateProfileDto {
   @IsString()
   fullName?: string;
 
-  @ApiPropertyOptional()
-  @IsOptional()
-  @IsString()
-  profileImage?: string;
 
   @ApiPropertyOptional()
   @IsOptional()

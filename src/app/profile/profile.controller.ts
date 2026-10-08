@@ -41,31 +41,15 @@ export class ProfileController {
   }
 
   @Put()
-  @ApiOperation({ summary: 'Update user profile (name, phone, optional picture)' })
-  @UseInterceptors(FileInterceptor('file'))
-  @ApiConsumes('multipart/form-data', 'application/json')
-  @ApiBody({
-    schema: {
-      type: 'object',
-      properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
-        },
-        fullName: { type: 'string' },
-        phoneNumber: { type: 'string' },
-      },
-    },
-  })
+  @ApiOperation({ summary: 'Update user profile (name, phone)' })
   @ApiResponse({ status: 200 })
   @ApiResponse({ status: 400 })
   @ApiResponse({ status: 401 })
   updateProfile(
     @CurrentUser('sub') userId: string,
     @Body() dto: UpdateProfileDto,
-    @UploadedFile() file?: Express.Multer.File,
   ) {
-    return this.profileService.updateProfile(userId, dto, file);
+    return this.profileService.updateProfile(userId, dto);
   }
 
   @Post('picture')

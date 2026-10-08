@@ -52,7 +52,6 @@ export class ProfileService {
   async updateProfile(
     userId: string,
     dto: UpdateProfileDto,
-    file?: Express.Multer.File,
   ) {
     const userExists = await this.prisma.user.findUnique({
       where: { id: userId },
@@ -62,20 +61,10 @@ export class ProfileService {
       throw new NotFoundException('User profile not found');
     }
 
-    let profileImageUrl = dto.profileImage;
-
-    // Handle file upload if an image file was attached
-    if (file) {
-      profileImageUrl = await this.processAndUploadPicture(file);
-    }
-
     const updatedUser = await this.prisma.user.update({
       where: { id: userId },
       data: {
         ...(dto.fullName !== undefined && { fullName: dto.fullName }),
-        ...(profileImageUrl !== undefined && {
-          profileImage: profileImageUrl,
-        }),
         ...(dto.phoneNumber !== undefined && { phoneNumber: dto.phoneNumber }),
       },
       select: {
