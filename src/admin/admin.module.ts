@@ -9,6 +9,7 @@ import { AdminBookingsModule } from './bookings/admin-bookings.module';
 import { AdminReportsModule } from './reports/admin-reports.module';
 import { AdminNotificationsModule } from './notifications/admin-notifications.module';
 import { AdminSettingsModule } from './settings/admin-settings.module';
+import { AdminConditionsModule } from './conditions/admin-conditions.module';
 
 /**
  * Aggregate module for all admin feature modules.
@@ -30,6 +31,7 @@ import { AdminSettingsModule } from './settings/admin-settings.module';
     AdminReportsModule,
     AdminNotificationsModule,
     AdminSettingsModule,
+    AdminConditionsModule,
   ],
 })
 export class AdminModule {}
