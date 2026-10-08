@@ -3,13 +3,13 @@ import { AdminConditionsService } from './admin-conditions.service';
 import { CreateConditionDto } from './dto/create-condition.dto';
 import { UpdateConditionDto } from './dto/update-condition.dto';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { AdminJwtGuard } from '../guards/admin-jwt.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('Admin - Conditions')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(AdminJwtGuard, RolesGuard)
 @Roles('ADMIN', 'SUPER_ADMIN')
 @Controller({ path: 'admin/conditions', version: '1' })
 export class AdminConditionsController {

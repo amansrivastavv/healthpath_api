@@ -3,13 +3,13 @@ import { AdminTestsService } from './admin-tests.service';
 import { CreateTestDto } from './dto/create-test.dto';
 import { UpdateTestDto } from './dto/update-test.dto';
 import { ApiTags, ApiBearerAuth, ApiOperation } from '@nestjs/swagger';
-import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { AdminJwtGuard } from '../guards/admin-jwt.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 
 @ApiTags('Admin - Tests')
 @ApiBearerAuth()
-@UseGuards(JwtAuthGuard, RolesGuard)
+@UseGuards(AdminJwtGuard, RolesGuard)
 @Roles('ADMIN', 'SUPER_ADMIN')
 @Controller({ path: 'admin/tests', version: '1' })
 export class AdminTestsController {
