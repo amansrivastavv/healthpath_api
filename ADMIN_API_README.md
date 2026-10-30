@@ -29,8 +29,8 @@ Admin authentication uses JWT Bearer tokens. Dashboard accounts can be created e
 - **Request Body**: `application/json`
 ```json
 {
-  "fullName": "Dr. Sarah Connor",
-  "email": "sarah.admin@healthpath.com",
+  "fullName": "Dr. Rajesh Kumar",
+  "email": "rajesh.admin@healthpath.com",
   "password": "AdminPassword123!",
   "phoneNumber": "+919876543210",
   "countryCode": "+91"
@@ -51,8 +51,8 @@ Admin authentication uses JWT Bearer tokens. Dashboard accounts can be created e
     "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
     "user": {
       "id": "3fa85f64-5717-4562-b3fc-2c963f66afa6",
-      "fullName": "Dr. Sarah Connor",
-      "email": "sarah.admin@healthpath.com",
+      "fullName": "Dr. Rajesh Kumar",
+      "email": "rajesh.admin@healthpath.com",
       "role": "ADMIN",
       "status": "ACTIVE"
     }
@@ -322,7 +322,7 @@ Providers Management (POST/GET/PUT/DELETE /api/v1/admin/providers)
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `fullName` | string | **Yes** | Doctor's name (e.g. Dr. Sarah Connor) |
+| `fullName` | string | **Yes** | Doctor's name (e.g. Dr. Rajesh Kumar) |
 | `specializationId` | UUID | **Yes** | Valid Specialization UUID |
 | `qualification` | string | **Yes** | Degree/Qualifications (e.g. MBBS, MD) |
 | `experienceYears` | number | **Yes** | Years of practice (>= 0) |

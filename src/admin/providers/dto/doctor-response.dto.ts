@@ -5,10 +5,10 @@ export class DoctorDto {
   @ApiProperty({ example: 'd3b07384-d113-4956-a5e2-e1c7d23d8c8d' })
   id: string;
 
-  @ApiProperty({ example: 'Dr. Sarah Connor' })
+  @ApiProperty({ example: 'Dr. Rajesh Kumar' })
   fullName: string;
 
-  @ApiPropertyOptional({ example: 'https://cdn.example.com/profiles/doctor.jpg' })
+  @ApiPropertyOptional({ example: 'https://pub-10a6af201eaa41d4a4ed8f9a8b4b4da8.r2.dev/doctors/profiles/doctor.jpg' })
   profileImage?: string;
 
   @ApiProperty({ example: 'c1b07384-d113-4956-a5e2-e1c7d23d8c8d' })
@@ -23,7 +23,7 @@ export class DoctorDto {
   @ApiProperty({ example: 'MCI-123456' })
   medicalRegistrationNumber: string;
 
-  @ApiProperty({ enum: Gender, example: Gender.FEMALE })
+  @ApiProperty({ enum: Gender, example: Gender.MALE })
   gender: Gender;
 
   @ApiProperty({ example: ['English', 'Hindi'] })

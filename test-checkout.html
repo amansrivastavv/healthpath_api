@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>HealthPath - Razorpay Booking Checkout Test</title>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f4f6f8;
+      display: flex;
+      justify-content: center;
+      padding: 40px 20px;
+    }
+    .card {
+      background: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+      max-width: 460px;
+      width: 100%;
+    }
+    h2 { margin-top: 0; color: #1e293b; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 5px; }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      box-sizing: border-box;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      background: #2563eb;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+    button:hover { background: #1d4ed8; }
+    #status {
+      margin-top: 15px;
+      padding: 12px;
+      border-radius: 6px;
+      display: none;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .success { background: #dcfce7; color: #166534; border: 1px solid #bbf7d0; }
+    .error { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>🏥 Book Appointment & Pay</h2>
+    <div class="form-group">
+      <label>Patient Name</label>
+      <input type="text" id="patientName" value="Aman Srivastava" />
+    </div>
+    <div class="form-group">
+      <label>Phone Number</label>
+      <input type="text" id="phone" value="+919876543210" />
+    </div>
+    <div class="form-group">
+      <label>Age & Gender</label>
+      <div style="display: flex; gap: 10px;">
+        <input type="number" id="age" value="26" style="width: 40%;" />
+        <select id="gender" style="width: 60%;">
+          <option value="MALE">Male</option>
+          <option value="FEMALE">Female</option>
+          <option value="OTHER">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Date & Slot Time</label>
+      <div style="display: flex; gap: 10px;">
+        <input type="date" id="date" value="2026-11-20" style="width: 50%;" />
+        <input type="text" id="slotTime" value="11:30 AM" style="width: 50%;" />
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Mode</label>
+      <select id="mode">
+        <option value="online">Online Consultation</option>
+        <option value="offline">In-Person / Offline Visit</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Consultation Fee (INR)</label>
+      <input type="number" id="price" value="500" />
+    </div>
+    <div class="form-group">
+      <label>Reason for Visit</label>
+      <input type="text" id="reason" value="General medical checkup" />
+    </div>
+    <button id="bookBtn" onclick="handleBooking()">Proceed to Pay with Razorpay</button>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    const API_BASE = "http://localhost:5000/api/v1";
+
+    async function handleBooking() {
+      const btn = document.getElementById("bookBtn");
+      const statusDiv = document.getElementById("status");
+      statusDiv.style.display = "none";
+      btn.disabled = true;
+      btn.innerText = "Creating booking & order...";
+
+      try {
+        const payload = {
+          patientName: document.getElementById("patientName").value,
+          phone: document.getElementById("phone").value,
+          age: parseInt(document.getElementById("age").value, 10),
+          gender: document.getElementById("gender").value,
+          date: document.getElementById("date").value,
+          availableSlotTime: document.getElementById("slotTime").value,
+          mode: document.getElementById("mode").value,
+          price: parseFloat(document.getElementById("price").value),
+          reason: document.getElementById("reason").value,
+        };
+
+        const res = await fetch(`${API_BASE}/bookings`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (!data.success) {
+          throw new Error(data.message || "Failed to create booking");
+        }
+
+        const booking = data.data;
+        const payment = booking.payment;
+
+        if (!payment || !payment.orderId) {
+          statusDiv.className = "success";
+          statusDiv.style.display = "block";
+          statusDiv.innerHTML = `<strong>Booking Confirmed!</strong><br/>Ref: ${booking.bookingReference}`;
+          btn.disabled = false;
+          btn.innerText = "Proceed to Pay with Razorpay";
+          return;
+        }
+
+        btn.innerText = "Opening Razorpay...";
+
+        // Open Razorpay Popup
+        const options = {
+          key: payment.keyId,
+          amount: payment.amount,
+          currency: payment.currency,
+          name: "HealthPath Care",
+          description: `Appointment: ${booking.bookingReference}`,
+          order_id: payment.orderId,
+          prefill: {
+            name: booking.patientDetails.patientName,
+            contact: booking.patientDetails.phone,
+          },
+          theme: { color: "#2563eb" },
+          handler: async function (response) {
+            btn.innerText = "Verifying payment...";
+            try {
+              const verifyRes = await fetch(`${API_BASE}/bookings/${booking.id}/payment/verify`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpayOrderId: response.razorpay_order_id,
+                  razorpayPaymentId: response.razorpay_payment_id,
+                  razorpaySignature: response.razorpay_signature,
+                })
+              });
+              const verifyData = await verifyRes.json();
+              if (verifyData.success) {
+                statusDiv.className = "success";
+                statusDiv.style.display = "block";
+                statusDiv.innerHTML = `<strong>Payment Successful!</strong><br/>Booking Confirmed: <b>${booking.bookingReference}</b><br/>Payment ID: ${response.razorpay_payment_id}`;
+              } else {
+                throw new Error(verifyData.message);
+              }
+            } catch (err) {
+              statusDiv.className = "error";
+              statusDiv.style.display = "block";
+              statusDiv.innerHTML = `Verification error: ${err.message}`;
+            } finally {
+              btn.disabled = false;
+              btn.innerText = "Proceed to Pay with Razorpay";
+            }
+          },
+          modal: {
+            ondismiss: function () {
+              btn.disabled = false;
+              btn.innerText = "Proceed to Pay with Razorpay";
+              statusDiv.className = "error";
+              statusDiv.style.display = "block";
+              statusDiv.innerHTML = "Payment was cancelled or closed.";
+            }
+          }
+        };
+
+        const rzp = new window.Razorpay(options);
+        rzp.open();
+
+      } catch (err) {
+        statusDiv.className = "error";
+        statusDiv.style.display = "block";
+        statusDiv.innerHTML = `Error: ${err.message}`;
+        btn.disabled = false;
+        btn.innerText = "Proceed to Pay with Razorpay";
+      }
+    }
+  </script>
+</body>
+</html>

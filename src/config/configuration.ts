@@ -24,4 +24,8 @@ export default () => ({
     bcc: process.env.SMTP_BCC,
   },
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:3000',
+  razorpay: {
+    keyId: process.env.RAZORPAY_KEY_ID || process.env.razorpay_key_id,
+    keySecret: process.env.RAZORPAY_KEY_SECRET || process.env.razorpay_key_secret,
+  },
 });

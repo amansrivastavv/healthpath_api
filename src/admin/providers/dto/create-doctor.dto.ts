@@ -15,7 +15,7 @@ import { Transform, Type } from 'class-transformer';
 import { Gender, ConsultationType, VerificationStatus } from '@prisma/client';
 
 export class CreateDoctorDto {
-  @ApiProperty({ example: 'Dr. Sarah Connor' })
+  @ApiProperty({ example: 'Dr. Rajesh Kumar' })
   @IsString()
   @IsNotEmpty({ message: 'Full name is required' })
   @Transform(({ value }: { value: unknown }): unknown =>
@@ -23,7 +23,7 @@ export class CreateDoctorDto {
   )
   fullName: string;
 
-  @ApiProperty({ example: 'doctor@example.com' })
+  @ApiProperty({ example: 'dr.rajesh@healthpath.com' })
   @IsEmail({}, { message: 'Valid email is required' })
   @IsNotEmpty({ message: 'Email is required' })
   @Transform(({ value }: { value: unknown }): unknown =>
@@ -31,7 +31,7 @@ export class CreateDoctorDto {
   )
   email: string;
 
-  @ApiPropertyOptional({ example: '+1234567890' })
+  @ApiPropertyOptional({ example: '+919876543210' })
   @IsOptional()
   @IsString()
   phone?: string;

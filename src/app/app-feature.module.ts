@@ -7,6 +7,7 @@ import { AppSpecializationsModule } from './specializations/app-specializations.
 import { AppConditionsModule } from './conditions/app-conditions.module';
 import { AppTestsModule } from './tests/app-tests.module';
 import { AppTrendingModule } from './trending/app-trending.module';
+import { AppBookingsModule } from './bookings/app-bookings.module';
 
 /**
  * Aggregate module for all patient-facing (App) feature modules.
@@ -22,6 +23,7 @@ import { AppTrendingModule } from './trending/app-trending.module';
     AppConditionsModule,
     AppTestsModule,
     AppTrendingModule,
+    AppBookingsModule,
   ],
   exports: [
     AuthModule,
@@ -31,6 +33,7 @@ import { AppTrendingModule } from './trending/app-trending.module';
     AppConditionsModule,
     AppTestsModule,
     AppTrendingModule,
+    AppBookingsModule,
   ],
 })
 export class AppFeatureModule {}

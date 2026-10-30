@@ -4,7 +4,7 @@ import { ConsultationType } from '@prisma/client';
 import { Transform, Type } from 'class-transformer';
 
 export class UpdateDoctorProfileDto {
-  @ApiPropertyOptional({ example: 'Dr. Sarah Connor' })
+  @ApiPropertyOptional({ example: 'Dr. Rajesh Kumar' })
   @IsOptional()
   @IsString()
   @Transform(({ value }) => (typeof value === 'string' ? value.trim() : value))

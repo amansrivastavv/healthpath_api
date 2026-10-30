@@ -58,6 +58,7 @@ model User {
   providers       Provider[]
   doctorProfile   Doctor?
   searchLogs      SearchLog[]
+  bookings        Booking[]
 
   createdAt       DateTime    @default(now()) @map("created_at")
   updatedAt       DateTime    @updatedAt @map("updated_at")
@@ -178,6 +179,7 @@ model Provider {
   doctors                 Doctor[]
   documents               VerificationDocument[]
   providerTests           ProviderTest[]
+  bookings                Booking[]
 
   createdAt               DateTime            @default(now()) @map("created_at")
   updatedAt               DateTime            @updatedAt @map("updated_at")
@@ -252,6 +254,7 @@ model Doctor {
   availabilities            DoctorAvailability[]
   documents                 VerificationDocument[]
   conditions                DoctorCondition[]
+  bookings                  Booking[]
 
   createdAt                 DateTime            @default(now()) @map("created_at")
   updatedAt                 DateTime            @updatedAt @map("updated_at")
@@ -366,6 +369,7 @@ model Test {
   // Relations
   conditions       TestCondition[]
   providerTests    ProviderTest[]
+  bookings         Booking[]
 
   createdAt        DateTime        @default(now()) @map("created_at")
   updatedAt        DateTime        @updatedAt @map("updated_at")
@@ -429,3 +433,78 @@ model SearchLog {
   @@index([createdAt])
   @@map("search_logs")
 }
+
+// ─── Bookings ──────────────────────────────────────────────────
+
+enum BookingMode {
+  ONLINE
+  OFFLINE
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+model Booking {
+  id               String        @id @default(uuid())
+  bookingReference String        @unique @map("booking_reference")
+
+  userId           String?       @map("user_id")
+  user             User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  doctorId         String?       @map("doctor_id")
+  doctor           Doctor?       @relation(fields: [doctorId], references: [id], onDelete: SetNull)
+
+  providerId       String?       @map("provider_id")
+  provider         Provider?     @relation(fields: [providerId], references: [id], onDelete: SetNull)
+
+  testId           String?       @map("test_id")
+  test             Test?         @relation(fields: [testId], references: [id], onDelete: SetNull)
+
+  // Booking Specifications
+  price            Float         @default(0)
+  date             DateTime      @map("date")
+  slotTime         String        @map("slot_time")
+  mode             BookingMode   @default(ONLINE)
+
+  // Patient Details
+  patientName      String        @map("patient_name")
+  age              Int           @map("age")
+  gender           Gender        @map("gender")
+  phone            String        @map("phone")
+  reason           String?       @db.Text @map("reason")
+
+  // Status & Metadata
+  status            BookingStatus @default(PENDING)
+  paymentStatus     PaymentStatus @default(PENDING) @map("payment_status")
+  notes             String?       @db.Text
+
+  // Razorpay Payment Details
+  razorpayOrderId   String?       @map("razorpay_order_id")
+  razorpayPaymentId String?       @map("razorpay_payment_id")
+  razorpaySignature String?       @map("razorpay_signature")
+
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  @@index([userId])
+  @@index([doctorId])
+  @@index([providerId])
+  @@index([testId])
+  @@index([date])
+  @@index([status])
+  @@index([paymentStatus])
+  @@index([bookingReference])
+  @@index([razorpayOrderId])
+  @@map("bookings")
+}
