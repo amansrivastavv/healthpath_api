@@ -4,7 +4,9 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
 } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import * as crypto from 'crypto';
 import * as path from 'path';
 
@@ -113,5 +115,26 @@ export class R2Service {
     const baseUrl = this.publicUrl.replace(/\/$/, '');
     const cleanKey = key.replace(/^\//, '');
     return `${baseUrl}/${cleanKey}`;
+  }
+
+  async getSignedDownloadUrl(
+    key: string,
+    expiresIn = 900,
+    downloadFilename?: string,
+  ): Promise<string> {
+    if (!key) return '';
+    try {
+      const command = new GetObjectCommand({
+        Bucket: this.bucketName,
+        Key: key,
+        ...(downloadFilename && {
+          ResponseContentDisposition: `attachment; filename="${downloadFilename}"`,
+        }),
+      });
+      return await getSignedUrl(this.s3Client, command, { expiresIn });
+    } catch (error: any) {
+      this.logger.warn(`Failed to generate signed URL, falling back to public URL: ${error.message}`);
+      return this.getPublicUrl(key);
+    }
   }
 }
