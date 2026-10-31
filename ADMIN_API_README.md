@@ -618,6 +618,228 @@ Allows Administrators and Super Admins to manage system users (Admins, Lab Owner
 
 ---
 
+## 11. BOOKINGS (`/api/v1/admin/bookings`)
+
+The Admin Bookings module allows administrators to inspect, search, filter, edit, and manage all appointments (doctor consultations) and diagnostic lab test bookings across the platform.
+
+### 11.1 List & Filter Bookings
+- **Method**: `GET`
+- **URL**: `/api/v1/admin/bookings`
+- **Auth**: Bearer Token (`ADMIN`, `SUPER_ADMIN`)
+- **Query Parameters**:
+  - `page`: number (optional, default: `1`)
+  - `limit`: number (optional, default: `10`, max: `100`)
+  - `status`: `PENDING` | `CONFIRMED` | `COMPLETED` | `CANCELLED` (optional)
+  - `paymentStatus`: `PENDING` | `PAID` | `FAILED` | `REFUNDED` (optional)
+  - `mode`: `ONLINE` | `OFFLINE` (optional)
+  - `search`: string (matches booking reference, patient name, phone, doctor name, provider name, or user email)
+  - `doctorId`: UUID (optional filter)
+  - `providerId`: UUID (optional filter)
+  - `testId`: UUID (optional filter)
+  - `userId`: UUID (optional filter)
+  - `fromDate`: string `YYYY-MM-DD` (optional filter)
+  - `toDate`: string `YYYY-MM-DD` (optional filter)
+  - `sortBy`: `createdAt` | `date` | `price` | `status` (optional, default: `createdAt`)
+  - `sortOrder`: `asc` | `desc` (optional, default: `desc`)
+
+**Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "message": "Bookings retrieved successfully",
+  "data": {
+    "items": [
+      {
+        "id": "c1f7a0b3-96b4-4b55-83c7-31637c22998a",
+        "bookingReference": "HP-BK-20261030-A1B2",
+        "price": 500,
+        "date": "2026-11-15",
+        "slotTime": "10:30 AM",
+        "mode": "ONLINE",
+        "status": "CONFIRMED",
+        "paymentStatus": "PAID",
+        "patientDetails": {
+          "patientName": "Rahul Verma",
+          "age": 32,
+          "gender": "MALE",
+          "phone": "+919876543210",
+          "reason": "Mild fever and cough"
+        },
+        "user": {
+          "id": "u-user-uuid",
+          "fullName": "Rahul Verma",
+          "email": "rahul@example.com",
+          "phoneNumber": "+919876543210"
+        },
+        "doctor": {
+          "id": "d-doctor-uuid",
+          "fullName": "Dr. Rajesh Kumar",
+          "profileImage": "https://example.com/doctor.jpg",
+          "specialization": "General Physician",
+          "consultationFee": 500
+        },
+        "provider": {
+          "id": "p-provider-uuid",
+          "name": "Apollo Clinic",
+          "type": "CLINIC",
+          "city": "Mumbai",
+          "state": "Maharashtra",
+          "address": "123 Marine Drive",
+          "phone": "+919876500000"
+        },
+        "test": null,
+        "notes": "Patient requested evening slot if available.",
+        "razorpayOrderId": "order_PU3bQx1zY2a3b4",
+        "razorpayPaymentId": "pay_PU3bQx1zY2a3b4",
+        "razorpaySignature": "sig_PU3bQx1zY2a3b4",
+        "createdAt": "2026-10-30T10:00:00.000Z",
+        "updatedAt": "2026-10-30T10:05:00.000Z"
+      }
+    ],
+    "meta": {
+      "page": 1,
+      "limit": 10,
+      "total": 52,
+      "totalPages": 6
+    },
+    "summary": {
+      "totalBookings": 52,
+      "pending": 12,
+      "confirmed": 25,
+      "completed": 10,
+      "cancelled": 5,
+      "totalRevenue": 26000
+    }
+  }
+}
+```
+
+---
+
+### 11.2 Get Booking Details
+- **Method**: `GET`
+- **URL**: `/api/v1/admin/bookings/{id}`
+- **Auth**: Bearer Token (`ADMIN`, `SUPER_ADMIN`)
+- **URL Param**: `{id}` can be booking UUID or `bookingReference` (e.g. `HP-BK-20261030-A1B2`)
+
+**Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "message": "Booking retrieved successfully",
+  "data": {
+    "id": "c1f7a0b3-96b4-4b55-83c7-31637c22998a",
+    "bookingReference": "HP-BK-20261030-A1B2",
+    "price": 500,
+    "date": "2026-11-15",
+    "slotTime": "10:30 AM",
+    "mode": "ONLINE",
+    "status": "CONFIRMED",
+    "paymentStatus": "PAID",
+    "patientDetails": {
+      "patientName": "Rahul Verma",
+      "age": 32,
+      "gender": "MALE",
+      "phone": "+919876543210",
+      "reason": "Mild fever and cough"
+    },
+    "user": null,
+    "doctor": null,
+    "provider": null,
+    "test": null,
+    "notes": "Patient requested evening slot if available.",
+    "razorpayOrderId": "order_PU3bQx1zY2a3b4",
+    "razorpayPaymentId": "pay_PU3bQx1zY2a3b4",
+    "razorpaySignature": "sig_PU3bQx1zY2a3b4",
+    "createdAt": "2026-10-30T10:00:00.000Z",
+    "updatedAt": "2026-10-30T10:05:00.000Z"
+  }
+}
+```
+
+---
+
+### 11.3 Edit / Update Booking
+- **Method**: `PATCH` / `PUT`
+- **URL**: `/api/v1/admin/bookings/{id}`
+- **Auth**: Bearer Token (`ADMIN`, `SUPER_ADMIN`)
+- **URL Param**: `{id}` can be booking UUID or `bookingReference`
+- **Request Body**: `application/json` (All fields optional)
+```json
+{
+  "status": "CONFIRMED",
+  "paymentStatus": "PAID",
+  "date": "2026-11-16",
+  "slotTime": "11:00 AM",
+  "mode": "ONLINE",
+  "patientName": "Rahul Verma",
+  "age": 32,
+  "gender": "MALE",
+  "phone": "+919876543210",
+  "reason": "Follow-up consultation",
+  "price": 500,
+  "notes": "Rescheduled with patient consent.",
+  "doctorId": "d-doctor-uuid",
+  "providerId": "p-provider-uuid",
+  "testId": null
+}
+```
+
+**Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "message": "Booking updated successfully",
+  "data": { ... }
+}
+```
+
+---
+
+### 11.4 Update Booking Status
+- **Method**: `PATCH`
+- **URL**: `/api/v1/admin/bookings/{id}/status`
+- **Auth**: Bearer Token (`ADMIN`, `SUPER_ADMIN`)
+- **URL Param**: `{id}` can be booking UUID or `bookingReference`
+- **Request Body**: `application/json`
+```json
+{
+  "status": "COMPLETED",
+  "paymentStatus": "PAID",
+  "notes": "Consultation concluded successfully"
+}
+```
+
+**Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "message": "Booking status updated successfully",
+  "data": { ... }
+}
+```
+
+---
+
+### 11.5 Delete Booking
+- **Method**: `DELETE`
+- **URL**: `/api/v1/admin/bookings/{id}`
+- **Auth**: Bearer Token (`ADMIN`, `SUPER_ADMIN`)
+- **URL Param**: `{id}` can be booking UUID or `bookingReference`
+
+**Success Response (`200 OK`)**:
+```json
+{
+  "success": true,
+  "message": "Booking deleted successfully",
+  "data": {}
+}
+```
+
+---
+
+---
+
 ## 11. FRONTEND PAGE → API MAPPING
 
 | Admin Screen | API Route | Purpose |
@@ -680,6 +902,7 @@ Allows Administrators and Super Admins to manage system users (Admins, Lab Owner
 | **Specializations** | `/admin/v1/specializations` | `/admin/v1/specializations` | `/admin/v1/specializations/{id}` | `/admin/v1/specializations/{id}` | `/admin/v1/specializations/{id}` |
 | **Availability** | `/admin/v1/doctors/{id}/availability` | `/admin/v1/doctors/{id}/availability` | N/A | `/admin/v1/doctors/{docId}/availability/{id}` | `/admin/v1/doctors/{docId}/availability/{id}` |
 | **Documents** | `/admin/v1/providers/{id}/documents`<br>`/admin/v1/doctors/{id}/documents` | `/admin/v1/providers/{id}/documents`<br>`/admin/v1/doctors/{id}/documents` | N/A | `/admin/v1/documents/{id}` | `/admin/v1/documents/{id}` |
+| **Bookings** | N/A *(Patient-facing / checkout)* | `/admin/v1/bookings` | `/admin/v1/bookings/{id}` | `/admin/v1/bookings/{id}` | `/admin/v1/bookings/{id}` |
 
 ---
 
